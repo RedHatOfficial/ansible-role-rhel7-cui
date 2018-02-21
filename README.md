@@ -46,7 +46,7 @@ N/A
 Role Variables
 --------------
 
-TODO
+To customize the role to your liking, check out the [list of variables](vars/main.yml).
 
 Dependencies
 ------------
@@ -71,7 +71,7 @@ Then first check the playbook using (on the localhost):
 
 To deploy it, use (this may change configuration of your local machine!):
 
-    ansible-playbook -i "localhost," -c local --check playbook.yml
+    ansible-playbook -i "localhost," -c local playbook.yml
 
 
 License
