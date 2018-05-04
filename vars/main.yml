@@ -77,6 +77,7 @@ var_password_pam_retry: 3
 var_password_pam_ucredit: -1
 var_password_pam_unix_remember: 5
 var_polyinstantiation_enabled: false
+var_removable_partition: /dev/cdrom
 var_secadm_exec_content: true
 var_secure_mode: false
 var_secure_mode_insmod: false
