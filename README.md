@@ -22,9 +22,8 @@ This profile configures Red Hat Enterprise Linux 7 to the NIST Special
 Publication 800-53 controls identified for securing Controlled Unclassified  
 Information (CUI).  
   
-  
 Benchmark ID:  RHEL-7  
-Benchmark Version:  0.1.38  
+Benchmark Version:  0.1.39  
   
 XCCDF Version:  1.1  
   
