@@ -1,0 +1,5 @@
+---
+- name: Converge
+  hosts: all
+  roles:
+    - role: ansible-rhel7-nist-800-171-cui-role

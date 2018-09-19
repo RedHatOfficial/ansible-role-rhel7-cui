@@ -1,5 +1,6 @@
 ---
 - hosts: localhost
-  remote_user: root
+  connection: local
+  become: true
   roles:
-    - rhel7-role-nist-800-171-cui
+    - ansible-rhel7-nist-800-171-cui-role

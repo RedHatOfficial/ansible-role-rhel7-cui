@@ -1,6 +1,10 @@
 Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)
 =========
 
+[![Build Status](https://travis-ci.org/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role.svg?branch=master)](https://travis-ci.org/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role)
+[![Ansible Role](https://img.shields.io/ansible/role/26065.svg)](https://galaxy.ansible.com/RedHatOfficial/rhel7-nist-800-171-cui-role)
+[![GitHub release](https://img.shields.io/github/release/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role.svg)](https://github.com/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role/releases/latest)
+
 Ansible remediation role for profile nist-800-171-cui  
 Profile Title:  Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)  
 Profile Description:  
