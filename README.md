@@ -1,5 +1,4 @@
-Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)
-=========
+# Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)
 
 [![Build Status](https://travis-ci.org/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role.svg?branch=master)](https://travis-ci.org/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role)
 [![Ansible Role](https://img.shields.io/ansible/role/26065.svg)](https://galaxy.ansible.com/RedHatOfficial/rhel7-nist-800-171-cui-role)
@@ -40,31 +39,27 @@ How to apply this remediation role:
 $ ansible-playbook -i "192.168.1.155," playbook.yml  
 $ ansible-playbook -i inventory.ini playbook.yml
 
-Requirements
-------------
+## Requirements
 
 - Ansible version 2.3 or higher
 
-Role Variables
---------------
+## Role Variables
 
 To customize the role to your liking, check out the [list of variables](vars/main.yml).
 
-Dependencies
-------------
+## Dependencies
 
 N/A
 
-Example Playbook
-----------------
+## Example Playbook
 
-Run `ansible-galaxy install Ansible-Security-Compliance.rhel7-role-nist-800-171-cui` to
+Run `ansible-galaxy install RedHatOfficial.rhel7-role-nist-800-171-cui` to
 download and install the role. Then you can use the following playbook snippet.
 
 
     - hosts: all
       roles:
-         - { role: Ansible-Security-Compliance.rhel7-role-nist-800-171-cui }
+         - { role: RedHatOfficial.rhel7-role-nist-800-171-cui }
 
 
 Then first check the playbook using (on the localhost):
@@ -76,12 +71,10 @@ To deploy it, use (this may change configuration of your local machine!):
     ansible-playbook -i "localhost," -c local playbook.yml
 
 
-License
--------
+## License
 
 BSD-3-Clause
 
-Author Information
-------------------
+## Author Information
 
 This Ansible remediation role has been generated from the body of security policies developed by the SCAP Security Guide project. Please see https://github.com/OpenSCAP/scap-security-guide/blob/master/Contributors.md for an updated list of authors and contributors.
