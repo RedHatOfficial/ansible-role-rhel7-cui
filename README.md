@@ -1,7 +1,7 @@
 # Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)
 
 [![Build Status](https://travis-ci.org/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role.svg?branch=master)](https://travis-ci.org/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role)
-[![Ansible Role](https://img.shields.io/ansible/role/26065.svg)](https://galaxy.ansible.com/RedHatOfficial/rhel7-nist-800-171-cui-role)
+[![Ansible Role](https://img.shields.io/ansible/role/26065.svg)](https://galaxy.ansible.com/RedHatOfficial/rhel7_nist_800_171_cui)
 [![GitHub release](https://img.shields.io/github/release/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role.svg)](https://github.com/RedHatOfficial/ansible-rhel7-nist-800-171-cui-role/releases/latest)
 
 Ansible remediation role for profile nist-800-171-cui  
@@ -53,13 +53,13 @@ N/A
 
 ## Example Playbook
 
-Run `ansible-galaxy install RedHatOfficial.rhel7-role-nist-800-171-cui` to
+Run `ansible-galaxy install RedHatOfficial.rhel7_nist_800_171_cui` to
 download and install the role. Then you can use the following playbook snippet.
 
 
     - hosts: all
       roles:
-         - { role: RedHatOfficial.rhel7-role-nist-800-171-cui }
+         - { role: RedHatOfficial.rhel7_nist_800_171_cui }
 
 
 Then first check the playbook using (on the localhost):

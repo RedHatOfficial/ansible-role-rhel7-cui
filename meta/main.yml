@@ -1,4 +1,5 @@
 galaxy_info:
+  role_name: rhel7_nist_800_171_cui
   author: SCAP Security Guide development team
   description: Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)
   company: "Red Hat, Inc."
