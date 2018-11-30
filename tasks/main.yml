@@ -10073,10 +10073,17 @@
     - NIST-800-171-3.5.4
     - NIST-800-171-3.13.8
     - DISA-STIG-RHEL-07-040310
+-   name: Register ssh key files
+    find:
+      paths: /etc/ssh
+      patterns: ".*_key"
+      use_regex: yes
+    register: ssh_key_files
 -   name: Ensure permission 0640 on /etc/ssh/*_key
     file:
-        path: /etc/ssh/*_key
+        path: "{{ item.path }}"
         mode: 416
+    with_items: "{{ ssh_key_files.files }}"
     tags:
     - file_permissions_sshd_private_key
     - medium_severity
@@ -10088,10 +10095,16 @@
     - NIST-800-171-3.1.13
     - NIST-800-171-3.13.10
     - DISA-STIG-RHEL-07-040420
+-   name: Register ssh public keys
+    find:
+      paths: /etc/ssh
+      patterns: "*.pub"
+    register: ssh_pub_keys
 -   name: Ensure permission 0644 on /etc/ssh/*.pub
     file:
-        path: /etc/ssh/*.pub
+        path: "{{ item.path }}"
         mode: 420
+    with_items: "{{ ssh_pub_keys.files }}"
     tags:
     - file_permissions_sshd_pub_key
     - medium_severity
