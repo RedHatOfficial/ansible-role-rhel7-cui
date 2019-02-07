@@ -8443,11 +8443,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean ssh_keysign accordingly
     seboolean:
         name: ssh_keysign
@@ -8459,11 +8454,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean gpg_web_anon_write accordingly
     seboolean:
@@ -8477,11 +8467,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_tcp_server accordingly
     seboolean:
         name: selinuxuser_tcp_server
@@ -8493,11 +8478,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean selinuxuser_use_ssh_chroot accordingly
     seboolean:
@@ -8511,11 +8491,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_rw_noexattrfile accordingly
     seboolean:
         name: selinuxuser_rw_noexattrfile
@@ -8527,11 +8502,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean selinuxuser_ping accordingly
     seboolean:
@@ -8545,11 +8515,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_execmod accordingly
     seboolean:
         name: selinuxuser_execmod
@@ -8561,11 +8526,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean domain_fd_use accordingly
     seboolean:
@@ -8579,11 +8539,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean xdm_sysadm_login accordingly
     seboolean:
         name: xdm_sysadm_login
@@ -8595,11 +8550,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean abrt_anon_write accordingly
     seboolean:
@@ -8615,11 +8565,6 @@
     - CCE-80419-5
     - NIST-800-171-3.7.2
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean cron_can_relabel accordingly
     seboolean:
         name: cron_can_relabel
@@ -8631,11 +8576,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean abrt_upload_watch_anon_write accordingly
     seboolean:
@@ -8651,11 +8591,6 @@
     - CCE-80421-1
     - NIST-800-171-3.7.2
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean use_ecryptfs_home_dirs accordingly
     seboolean:
         name: use_ecryptfs_home_dirs
@@ -8668,11 +8603,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean mount_anyfile accordingly
     seboolean:
         name: mount_anyfile
@@ -8684,11 +8614,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean auditadm_exec_content accordingly
     seboolean:
@@ -8704,11 +8629,6 @@
     - CCE-80424-5
     - NIST-800-171-80424-5
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean logging_syslogd_can_sendmail accordingly
     seboolean:
         name: logging_syslogd_can_sendmail
@@ -8720,11 +8640,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean daemons_use_tcp_wrapper accordingly
     seboolean:
@@ -8738,11 +8653,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean deny_ptrace accordingly
     seboolean:
         name: deny_ptrace
@@ -8755,11 +8665,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean cron_system_cronjob_use_shares accordingly
     seboolean:
         name: cron_system_cronjob_use_shares
@@ -8771,11 +8676,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean abrt_handle_event accordingly
     seboolean:
@@ -8791,11 +8691,6 @@
     - CCE-80420-3
     - NIST-800-171-3.7.2
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean user_exec_content accordingly
     seboolean:
         name: user_exec_content
@@ -8807,11 +8702,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean domain_kernel_load_modules accordingly
     seboolean:
@@ -8825,11 +8715,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean ssh_chroot_rw_homedirs accordingly
     seboolean:
         name: ssh_chroot_rw_homedirs
@@ -8842,11 +8727,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean ssh_sysadm_login accordingly
     seboolean:
         name: ssh_sysadm_login
@@ -8858,11 +8738,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean fips_mode accordingly
     seboolean:
@@ -8879,11 +8754,6 @@
     - NIST-800-53-SC-13
     - NIST-800-171-3.13.11
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean guest_exec_content accordingly
     seboolean:
         name: guest_exec_content
@@ -8895,11 +8765,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean kerberos_enabled accordingly
     seboolean:
@@ -8913,11 +8778,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean xguest_connect_network accordingly
     seboolean:
         name: xguest_connect_network
@@ -8929,11 +8789,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean secure_mode_insmod accordingly
     seboolean:
@@ -8947,11 +8802,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean xdm_exec_bootloader accordingly
     seboolean:
         name: xdm_exec_bootloader
@@ -8963,11 +8813,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean unconfined_login accordingly
     seboolean:
@@ -8981,11 +8826,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean xdm_write_home accordingly
     seboolean:
         name: xdm_write_home
@@ -8997,11 +8837,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean xserver_object_manager accordingly
     seboolean:
@@ -9015,11 +8850,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean deny_execmem accordingly
     seboolean:
         name: deny_execmem
@@ -9031,11 +8861,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean staff_exec_content accordingly
     seboolean:
@@ -9049,11 +8874,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean cron_userdomain_transition accordingly
     seboolean:
         name: cron_userdomain_transition
@@ -9065,11 +8885,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean xdm_bind_vnc_tcp_port accordingly
     seboolean:
@@ -9083,11 +8898,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_execheap accordingly
     seboolean:
         name: selinuxuser_execheap
@@ -9099,11 +8909,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean daemons_dump_core accordingly
     seboolean:
@@ -9117,11 +8922,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean mmap_low_allowed accordingly
     seboolean:
         name: mmap_low_allowed
@@ -9133,11 +8933,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean selinuxuser_udp_server accordingly
     seboolean:
@@ -9151,11 +8946,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean sysadm_exec_content accordingly
     seboolean:
         name: sysadm_exec_content
@@ -9167,11 +8957,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean login_console_enabled accordingly
     seboolean:
@@ -9185,11 +8970,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean polyinstantiation_enabled accordingly
     seboolean:
         name: polyinstantiation_enabled
@@ -9201,11 +8981,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean xguest_mount_media accordingly
     seboolean:
@@ -9219,11 +8994,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean xserver_clients_write_xshm accordingly
     seboolean:
         name: xserver_clients_write_xshm
@@ -9235,11 +9005,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean daemons_use_tty accordingly
     seboolean:
@@ -9253,11 +9018,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean logging_syslogd_use_tty accordingly
     seboolean:
         name: logging_syslogd_use_tty
@@ -9269,11 +9029,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean xguest_use_bluetooth accordingly
     seboolean:
@@ -9287,11 +9042,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_direct_dri_enabled accordingly
     seboolean:
         name: selinuxuser_direct_dri_enabled
@@ -9303,11 +9053,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean secure_mode_policyload accordingly
     seboolean:
@@ -9321,11 +9066,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_execstack accordingly
     seboolean:
         name: selinuxuser_execstack
@@ -9337,11 +9077,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean selinuxuser_postgresql_connect_enabled accordingly
     seboolean:
@@ -9355,11 +9090,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean selinuxuser_mysql_connect_enabled accordingly
     seboolean:
         name: selinuxuser_mysql_connect_enabled
@@ -9371,11 +9101,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean secure_mode accordingly
     seboolean:
@@ -9389,11 +9114,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean mock_enable_homedirs accordingly
     seboolean:
         name: mock_enable_homedirs
@@ -9405,11 +9125,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean selinuxuser_share_music accordingly
     seboolean:
@@ -9423,11 +9138,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean xguest_exec_content accordingly
     seboolean:
         name: xguest_exec_content
@@ -9440,11 +9150,6 @@
     - low_complexity
     - low_disruption
 
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
-
 -   name: Set SELinux boolean logadm_exec_content accordingly
     seboolean:
         name: logadm_exec_content
@@ -9456,11 +9161,6 @@
     - enable_strategy
     - low_complexity
     - low_disruption
-
--   name: Ensure libsemanage-python installed
-    package:
-        name: libsemanage-python
-        state: latest
 
 -   name: Set SELinux boolean xserver_execmem accordingly
     seboolean:
