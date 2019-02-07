@@ -7665,6 +7665,7 @@
     find:
         paths: /etc/yum.repos.d/
         patterns: '*.repo'
+        contains: ^\[.+]$
     register: yum_find
 
 -   name: Ensure gpgcheck Enabled For All yum Package Repositories
