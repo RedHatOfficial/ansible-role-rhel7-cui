@@ -5739,9 +5739,15 @@
     when:
     - (ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker")
 
+-   name: Check existence of pkcs11-switch
+    stat:
+        path: /usr/bin/pkcs11-switch
+    register: pkcs11switch
+
 -   name: Get NSS database smart card configuration
     shell: /usr/bin/pkcs11-switch
     register: pkcsw_output
+    when: pkcs11switch.stat.exists
     tags:
     - configure_opensc_nss_db
     - medium_severity
@@ -5754,7 +5760,7 @@
 
 -   name: Configure NSS DB To Use opensc
     shell: /usr/bin/pkcs11-switch opensc
-    when: pkcsw_output.stdout != "opensc" and True
+    when: pkcs11switch.stat.exists and pkcsw_output.stdout != "opensc"
     tags:
     - configure_opensc_nss_db
     - medium_severity
@@ -5778,12 +5784,18 @@
     - low_disruption
     - CCE-80569-7
 
+-   name: Check existence of opensc conf
+    stat:
+        path: /etc/opensc-{{ ansible_architecture }}.conf
+    register: opensc_conf
+
 -   name: Configure opensc Smart Card Drivers
     lineinfile:
         path: /etc/opensc-{{ ansible_architecture }}.conf
         line: '        card_drivers = {{ var_smartcard_drivers }}'
         regexp: (^\s+#|^)\s+card_drivers\s+=\s+.*
         state: present
+    when: opensc_conf.stat.exists
     tags:
     - configure_opensc_card_drivers
     - medium_severity
@@ -5800,6 +5812,7 @@
         line: '        force_card_driver = {{ var_smartcard_drivers }}'
         regexp: (^\s+#|^)\s+force_card_driver\s+=\s+.*
         state: present
+    when: opensc_conf.stat.exists
     tags:
     - force_opensc_card_drivers
     - medium_severity
