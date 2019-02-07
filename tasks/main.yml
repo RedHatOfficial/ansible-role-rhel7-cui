@@ -7526,7 +7526,7 @@
     package:
         name: dracut-fips
         state: present
-        when: ansible_distribution == 'Red Hat Enterprise Linux' and True
+    when: ansible_distribution == 'Red Hat Enterprise Linux' and True
     tags:
     - package_dracut-fips_installed
     - medium_severity
