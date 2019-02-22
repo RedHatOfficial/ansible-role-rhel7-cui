@@ -41,7 +41,7 @@ $ ansible-playbook -i inventory.ini playbook.yml
 
 ## Requirements
 
-- Ansible version 2.3 or higher
+- Ansible version 2.5 or higher
 
 ## Role Variables
 
@@ -53,13 +53,13 @@ N/A
 
 ## Example Playbook
 
-Run `ansible-galaxy install RedHatOfficial.rhel7_nist_800_171_cui` to
+Run `ansible-galaxy install RedHatOfficial.rhel7_cui` to
 download and install the role. Then you can use the following playbook snippet.
 
 
     - hosts: all
       roles:
-         - { role: RedHatOfficial.rhel7_nist_800_171_cui }
+         - { role: RedHatOfficial.rhel7_cui }
 
 
 Then first check the playbook using (on the localhost):
