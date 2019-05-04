@@ -1,5 +1,5 @@
 ---
-# defaults file for rhel7-role-nist-800-171-cui
+# defaults file for rhel7_cui
 
 account_disable_post_pw_expiration: true
 accounts_logon_fail_delay: true
@@ -165,6 +165,7 @@ mount_option_nosuid_remote_filesystems: true
 mount_option_nosuid_removable_partitions: true
 no_direct_root_logins: true
 no_empty_passwords: true
+no_reboot_needed: true
 no_rsh_trust_files: true
 package_aide_installed: true
 package_opensc_installed: true
@@ -176,6 +177,7 @@ package_xinetd_removed: true
 package_ypbind_removed: true
 package_ypserv_removed: true
 patch_strategy: true
+reboot_required: true
 restrict_serial_port_logins: true
 restrict_strategy: true
 rpm_verify_hashes: true
