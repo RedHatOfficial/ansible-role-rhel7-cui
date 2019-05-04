@@ -1,10 +1,7 @@
-- name: get back device associated to mountpoint
-  shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | cut -d '' '' -f 1 '
-  args:
-    warn: false
-    executable: /bin/bash
+- name: get back mount information associated to mountpoint
+  command: findmnt --fstab '{{ var_removable_partition }}'
   register: device_name
-  check_mode: false
+  failed_when: device_name.rc > 1
   changed_when: false
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -30,31 +27,14 @@
   - NIST-800-53-MP-2
   - DISA-STIG-RHEL-07-021010
 
-- block:
-  - name: get back device previous mount option
-    shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | sed -re ''s:.*\((.*)\):\1:'' '
-    args:
-      warn: false
-      executable: /bin/bash
-    register: device_cur_mountoption
-    check_mode: false
-    changed_when: false
-  - name: get back device fstype
-    shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | cut -d '' '' -f 5 '
-    args:
-      warn: false
-      executable: /bin/bash
-    register: device_fstype
-    check_mode: false
-    changed_when: false
-  - name: Ensure permission nosuid are set on var_removable_partition
-    mount:
-      path: '{{ var_removable_partition }}'
-      src: '{{ device_name.stdout }}'
-      opts: '{{ device_cur_mountoption.stdout }},nosuid'
-      state: mounted
-      fstype: '{{ device_fstype.stdout }}'
+- name: create mount_info dictionary variable
+  set_fact:
+    mount_info: '{{ mount_info|default({})|combine({item.0: item.1}) }}'
+  with_together:
+  - '{{ device_name.stdout_lines[0].split() | list | lower }}'
+  - '{{ device_name.stdout_lines[1].split() | list }}'
   when:
+  - device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - unknown_severity | bool
@@ -79,13 +59,43 @@
   - NIST-800-53-MP-2
   - DISA-STIG-RHEL-07-021010
 
-- name: get back device associated to mountpoint
-  shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | cut -d '' '' -f 1 '
-  args:
-    warn: false
-    executable: /bin/bash
+- name: Ensure permission nosuid are set on var_removable_partition
+  mount:
+    path: '{{ var_removable_partition }}'
+    src: '{{ mount_info.source }}'
+    opts: '{{ mount_info.options }},nosuid'
+    state: mounted
+    fstype: '{{ mount_info.fstype }}'
+  when:
+  - device_name.stdout is defined and device_name.stdout is defined
+  - (device_name.stdout | length > 0)
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - no_reboot_needed | bool
+  - mount_option_nosuid_removable_partitions | bool
+  - configure_strategy | bool
+  - low_complexity | bool
+  - high_disruption | bool
+  tags:
+  - mount_option_nosuid_removable_partitions
+  - unknown_severity
+  - configure_strategy
+  - low_complexity
+  - high_disruption
+  - no_reboot_needed
+  - CCE-80148-0
+  - NIST-800-53-AC-6
+  - NIST-800-53-AC-19(a)
+  - NIST-800-53-AC-19(d)
+  - NIST-800-53-AC-19(e)
+  - NIST-800-53-CM-7
+  - NIST-800-53-MP-2
+  - DISA-STIG-RHEL-07-021010
+
+- name: get back mount information associated to mountpoint
+  command: findmnt --fstab '{{ var_removable_partition }}'
   register: device_name
-  check_mode: false
+  failed_when: device_name.rc > 1
   changed_when: false
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -109,31 +119,14 @@
   - NIST-800-53-CM-7
   - NIST-800-53-MP-2
 
-- block:
-  - name: get back device previous mount option
-    shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | sed -re ''s:.*\((.*)\):\1:'' '
-    args:
-      warn: false
-      executable: /bin/bash
-    register: device_cur_mountoption
-    check_mode: false
-    changed_when: false
-  - name: get back device fstype
-    shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | cut -d '' '' -f 5 '
-    args:
-      warn: false
-      executable: /bin/bash
-    register: device_fstype
-    check_mode: false
-    changed_when: false
-  - name: Ensure permission noexec are set on var_removable_partition
-    mount:
-      path: '{{ var_removable_partition }}'
-      src: '{{ device_name.stdout }}'
-      opts: '{{ device_cur_mountoption.stdout }},noexec'
-      state: mounted
-      fstype: '{{ device_fstype.stdout }}'
+- name: create mount_info dictionary variable
+  set_fact:
+    mount_info: '{{ mount_info|default({})|combine({item.0: item.1}) }}'
+  with_together:
+  - '{{ device_name.stdout_lines[0].split() | list | lower }}'
+  - '{{ device_name.stdout_lines[1].split() | list }}'
   when:
+  - device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - unknown_severity | bool
@@ -156,13 +149,41 @@
   - NIST-800-53-CM-7
   - NIST-800-53-MP-2
 
-- name: get back device associated to mountpoint
-  shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | cut -d '' '' -f 1 '
-  args:
-    warn: false
-    executable: /bin/bash
+- name: Ensure permission noexec are set on var_removable_partition
+  mount:
+    path: '{{ var_removable_partition }}'
+    src: '{{ mount_info.source }}'
+    opts: '{{ mount_info.options }},noexec'
+    state: mounted
+    fstype: '{{ mount_info.fstype }}'
+  when:
+  - device_name.stdout is defined and device_name.stdout is defined
+  - (device_name.stdout | length > 0)
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - no_reboot_needed | bool
+  - configure_strategy | bool
+  - mount_option_noexec_removable_partitions | bool
+  - low_complexity | bool
+  - high_disruption | bool
+  tags:
+  - mount_option_noexec_removable_partitions
+  - unknown_severity
+  - configure_strategy
+  - low_complexity
+  - high_disruption
+  - no_reboot_needed
+  - CCE-80147-2
+  - NIST-800-53-AC-19(a)
+  - NIST-800-53-AC-19(d)
+  - NIST-800-53-AC-19(e)
+  - NIST-800-53-CM-7
+  - NIST-800-53-MP-2
+
+- name: get back mount information associated to mountpoint
+  command: findmnt --fstab '{{ var_removable_partition }}'
   register: device_name
-  check_mode: false
+  failed_when: device_name.rc > 1
   changed_when: false
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -186,31 +207,45 @@
   - NIST-800-53-CM-7
   - NIST-800-53-MP-2
 
-- block:
-  - name: get back device previous mount option
-    shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | sed -re ''s:.*\((.*)\):\1:'' '
-    args:
-      warn: false
-      executable: /bin/bash
-    register: device_cur_mountoption
-    check_mode: false
-    changed_when: false
-  - name: get back device fstype
-    shell: 'set -o pipefail mount | grep '' {{ var_removable_partition }} '' | cut -d '' '' -f 5 '
-    args:
-      warn: false
-      executable: /bin/bash
-    register: device_fstype
-    check_mode: false
-    changed_when: false
-  - name: Ensure permission nodev are set on var_removable_partition
-    mount:
-      path: '{{ var_removable_partition }}'
-      src: '{{ device_name.stdout }}'
-      opts: '{{ device_cur_mountoption.stdout }},nodev'
-      state: mounted
-      fstype: '{{ device_fstype.stdout }}'
+- name: create mount_info dictionary variable
+  set_fact:
+    mount_info: '{{ mount_info|default({})|combine({item.0: item.1}) }}'
+  with_together:
+  - '{{ device_name.stdout_lines[0].split() | list | lower }}'
+  - '{{ device_name.stdout_lines[1].split() | list }}'
   when:
+  - device_name.stdout_lines is defined
+  - (device_name.stdout | length > 0)
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - no_reboot_needed | bool
+  - mount_option_nodev_removable_partitions | bool
+  - configure_strategy | bool
+  - low_complexity | bool
+  - high_disruption | bool
+  tags:
+  - mount_option_nodev_removable_partitions
+  - unknown_severity
+  - configure_strategy
+  - low_complexity
+  - high_disruption
+  - no_reboot_needed
+  - CCE-80146-4
+  - NIST-800-53-AC-19(a)
+  - NIST-800-53-AC-19(d)
+  - NIST-800-53-AC-19(e)
+  - NIST-800-53-CM-7
+  - NIST-800-53-MP-2
+
+- name: Ensure permission nodev are set on var_removable_partition
+  mount:
+    path: '{{ var_removable_partition }}'
+    src: '{{ mount_info.source }}'
+    opts: '{{ mount_info.options }},nodev'
+    state: mounted
+    fstype: '{{ mount_info.fstype }}'
+  when:
+  - device_name.stdout is defined and device_name.stdout is defined
   - (device_name.stdout | length > 0)
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - unknown_severity | bool
@@ -319,6 +354,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_autofs_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_autofs_disabled
   - medium_severity
@@ -333,13 +376,6 @@
   - NIST-800-53-IA-3
   - NIST-800-171-3.4.6
   - DISA-STIG-RHEL-07-020110
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_autofs_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service autofs if applicable
   service:
@@ -348,6 +384,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_autofs_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_autofs_disabled
   - medium_severity
@@ -362,13 +406,6 @@
   - NIST-800-53-IA-3
   - NIST-800-171-3.4.6
   - DISA-STIG-RHEL-07-020110
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_autofs_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure kernel module 'hfs' is disabled
   lineinfile:
@@ -549,6 +586,14 @@
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_selinuxuser_rw_noexattrfile | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_rw_noexattrfile
   - medium_severity
@@ -556,19 +601,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_selinuxuser_rw_noexattrfile | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_rw_noexattrfile accordingly
   seboolean:
     name: selinuxuser_rw_noexattrfile
     state: '{{ var_selinuxuser_rw_noexattrfile }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_selinuxuser_rw_noexattrfile | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_rw_noexattrfile
   - medium_severity
@@ -576,18 +622,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_selinuxuser_rw_noexattrfile | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_ssh_chroot_rw_homedirs | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_ssh_chroot_rw_homedirs
   - medium_severity
@@ -595,19 +642,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_ssh_chroot_rw_homedirs | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean ssh_chroot_rw_homedirs accordingly
   seboolean:
     name: ssh_chroot_rw_homedirs
     state: '{{ var_ssh_chroot_rw_homedirs }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_ssh_chroot_rw_homedirs | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_ssh_chroot_rw_homedirs
   - medium_severity
@@ -615,18 +663,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_ssh_chroot_rw_homedirs | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_direct_dri_enabled | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_direct_dri_enabled
   - medium_severity
@@ -634,19 +683,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_direct_dri_enabled | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_direct_dri_enabled accordingly
   seboolean:
     name: selinuxuser_direct_dri_enabled
     state: '{{ var_selinuxuser_direct_dri_enabled }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_direct_dri_enabled | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_direct_dri_enabled
   - medium_severity
@@ -654,18 +704,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_direct_dri_enabled | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_secure_mode | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secure_mode
   - medium_severity
@@ -673,19 +724,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_secure_mode | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean secure_mode accordingly
   seboolean:
     name: secure_mode
     state: '{{ var_secure_mode }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_secure_mode | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secure_mode
   - medium_severity
@@ -693,18 +745,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_secure_mode | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_xguest_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_exec_content
   - medium_severity
@@ -712,19 +765,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_xguest_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xguest_exec_content accordingly
   seboolean:
     name: xguest_exec_content
     state: '{{ var_xguest_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_xguest_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_exec_content
   - medium_severity
@@ -732,18 +786,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_xguest_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_user_exec_content | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_user_exec_content
   - medium_severity
@@ -751,19 +806,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_user_exec_content | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean user_exec_content accordingly
   seboolean:
     name: user_exec_content
     state: '{{ var_user_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_user_exec_content | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_user_exec_content
   - medium_severity
@@ -771,18 +827,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_user_exec_content | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_xserver_execmem | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xserver_execmem
   - medium_severity
@@ -790,19 +847,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_xserver_execmem | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xserver_execmem accordingly
   seboolean:
     name: xserver_execmem
     state: '{{ var_xserver_execmem }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_xserver_execmem | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xserver_execmem
   - medium_severity
@@ -810,18 +868,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_xserver_execmem | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_daemons_dump_core | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_daemons_dump_core
   - medium_severity
@@ -829,19 +888,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_daemons_dump_core | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean daemons_dump_core accordingly
   seboolean:
     name: daemons_dump_core
     state: '{{ var_daemons_dump_core }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_daemons_dump_core | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_daemons_dump_core
   - medium_severity
@@ -849,18 +909,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_daemons_dump_core | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_mmap_low_allowed | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_mmap_low_allowed
   - medium_severity
@@ -868,19 +929,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_mmap_low_allowed | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean mmap_low_allowed accordingly
   seboolean:
     name: mmap_low_allowed
     state: '{{ var_mmap_low_allowed }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_mmap_low_allowed | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_mmap_low_allowed
   - medium_severity
@@ -888,18 +950,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_mmap_low_allowed | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_secadm_exec_content | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secadm_exec_content
   - medium_severity
@@ -907,19 +970,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_secadm_exec_content | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean secadm_exec_content accordingly
   seboolean:
     name: secadm_exec_content
     state: '{{ var_secadm_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_secadm_exec_content | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secadm_exec_content
   - medium_severity
@@ -927,18 +991,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_secadm_exec_content | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_cron_system_cronjob_use_shares | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_cron_system_cronjob_use_shares
   - medium_severity
@@ -946,19 +1011,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_cron_system_cronjob_use_shares | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean cron_system_cronjob_use_shares accordingly
   seboolean:
     name: cron_system_cronjob_use_shares
     state: '{{ var_cron_system_cronjob_use_shares }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_cron_system_cronjob_use_shares | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_cron_system_cronjob_use_shares
   - medium_severity
@@ -966,18 +1032,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_cron_system_cronjob_use_shares | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_domain_kernel_load_modules | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_domain_kernel_load_modules
   - medium_severity
@@ -985,19 +1052,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_domain_kernel_load_modules | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean domain_kernel_load_modules accordingly
   seboolean:
     name: domain_kernel_load_modules
     state: '{{ var_domain_kernel_load_modules }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_domain_kernel_load_modules | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_domain_kernel_load_modules
   - medium_severity
@@ -1005,18 +1073,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_domain_kernel_load_modules | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_fips_mode | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_fips_mode
   - medium_severity
@@ -1028,19 +1097,20 @@
   - NIST-800-53-SC-13
   - NIST-800-53-SC-39
   - NIST-800-171-3.13.11
-  when:
-  - sebool_fips_mode | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean fips_mode accordingly
   seboolean:
     name: fips_mode
     state: '{{ var_fips_mode }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_fips_mode | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_fips_mode
   - medium_severity
@@ -1052,18 +1122,19 @@
   - NIST-800-53-SC-13
   - NIST-800-53-SC-39
   - NIST-800-171-3.13.11
-  when:
-  - sebool_fips_mode | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_mysql_connect_enabled | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_mysql_connect_enabled
   - medium_severity
@@ -1071,19 +1142,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_mysql_connect_enabled | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_mysql_connect_enabled accordingly
   seboolean:
     name: selinuxuser_mysql_connect_enabled
     state: '{{ var_selinuxuser_mysql_connect_enabled }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_mysql_connect_enabled | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_mysql_connect_enabled
   - medium_severity
@@ -1091,18 +1163,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_mysql_connect_enabled | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_sysadm_exec_content | bool
+  - low_complexity | bool
   tags:
   - sebool_sysadm_exec_content
   - medium_severity
@@ -1110,19 +1183,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_sysadm_exec_content | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean sysadm_exec_content accordingly
   seboolean:
     name: sysadm_exec_content
     state: '{{ var_sysadm_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_sysadm_exec_content | bool
+  - low_complexity | bool
   tags:
   - sebool_sysadm_exec_content
   - medium_severity
@@ -1130,18 +1204,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_sysadm_exec_content | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_execstack | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_execstack
   - medium_severity
@@ -1149,19 +1224,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_execstack | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_execstack accordingly
   seboolean:
     name: selinuxuser_execstack
     state: '{{ var_selinuxuser_execstack }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_execstack | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_execstack
   - medium_severity
@@ -1169,18 +1245,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_execstack | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_kerberos_enabled | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_kerberos_enabled
   - medium_severity
@@ -1188,19 +1265,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_kerberos_enabled | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean kerberos_enabled accordingly
   seboolean:
     name: kerberos_enabled
     state: '{{ var_kerberos_enabled }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_kerberos_enabled | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_kerberos_enabled
   - medium_severity
@@ -1208,18 +1286,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_kerberos_enabled | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_daemons_use_tty | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_daemons_use_tty
   - medium_severity
@@ -1227,19 +1306,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_daemons_use_tty | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean daemons_use_tty accordingly
   seboolean:
     name: daemons_use_tty
     state: '{{ var_daemons_use_tty }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_daemons_use_tty | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_daemons_use_tty
   - medium_severity
@@ -1247,18 +1327,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_daemons_use_tty | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_logging_syslogd_use_tty | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_logging_syslogd_use_tty
   - medium_severity
@@ -1266,19 +1347,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_logging_syslogd_use_tty | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean logging_syslogd_use_tty accordingly
   seboolean:
     name: logging_syslogd_use_tty
     state: '{{ var_logging_syslogd_use_tty }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_logging_syslogd_use_tty | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_logging_syslogd_use_tty
   - medium_severity
@@ -1286,18 +1368,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_logging_syslogd_use_tty | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_selinuxuser_udp_server | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_udp_server
   - medium_severity
@@ -1305,19 +1388,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_selinuxuser_udp_server | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_udp_server accordingly
   seboolean:
     name: selinuxuser_udp_server
     state: '{{ var_selinuxuser_udp_server }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_selinuxuser_udp_server | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_udp_server
   - medium_severity
@@ -1325,18 +1409,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_selinuxuser_udp_server | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_deny_ptrace | bool
+  - low_complexity | bool
   tags:
   - sebool_deny_ptrace
   - medium_severity
@@ -1344,19 +1429,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_deny_ptrace | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean deny_ptrace accordingly
   seboolean:
     name: deny_ptrace
     state: '{{ var_deny_ptrace }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_deny_ptrace | bool
+  - low_complexity | bool
   tags:
   - sebool_deny_ptrace
   - medium_severity
@@ -1364,18 +1450,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_deny_ptrace | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_staff_exec_content | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_staff_exec_content
   - medium_severity
@@ -1383,19 +1470,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_staff_exec_content | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean staff_exec_content accordingly
   seboolean:
     name: staff_exec_content
     state: '{{ var_staff_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_staff_exec_content | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_staff_exec_content
   - medium_severity
@@ -1403,18 +1491,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_staff_exec_content | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_guest_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_guest_exec_content
   - medium_severity
@@ -1422,19 +1511,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_guest_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean guest_exec_content accordingly
   seboolean:
     name: guest_exec_content
     state: '{{ var_guest_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_guest_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_guest_exec_content
   - medium_severity
@@ -1442,18 +1532,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_guest_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_mount_anyfile | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_mount_anyfile
   - medium_severity
@@ -1461,19 +1552,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_mount_anyfile | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean mount_anyfile accordingly
   seboolean:
     name: mount_anyfile
     state: '{{ var_mount_anyfile }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_mount_anyfile | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_mount_anyfile
   - medium_severity
@@ -1481,18 +1573,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_mount_anyfile | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_xguest_connect_network | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_connect_network
   - medium_severity
@@ -1500,19 +1593,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_xguest_connect_network | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xguest_connect_network accordingly
   seboolean:
     name: xguest_connect_network
     state: '{{ var_xguest_connect_network }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_xguest_connect_network | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_connect_network
   - medium_severity
@@ -1520,18 +1614,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_xguest_connect_network | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_xdm_bind_vnc_tcp_port | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_bind_vnc_tcp_port
   - medium_severity
@@ -1539,19 +1634,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_xdm_bind_vnc_tcp_port | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xdm_bind_vnc_tcp_port accordingly
   seboolean:
     name: xdm_bind_vnc_tcp_port
     state: '{{ var_xdm_bind_vnc_tcp_port }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_xdm_bind_vnc_tcp_port | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_bind_vnc_tcp_port
   - medium_severity
@@ -1559,18 +1655,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_xdm_bind_vnc_tcp_port | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_xdm_exec_bootloader | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_exec_bootloader
   - medium_severity
@@ -1578,19 +1675,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_xdm_exec_bootloader | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xdm_exec_bootloader accordingly
   seboolean:
     name: xdm_exec_bootloader
     state: '{{ var_xdm_exec_bootloader }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_xdm_exec_bootloader | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_exec_bootloader
   - medium_severity
@@ -1598,18 +1696,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_xdm_exec_bootloader | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_gpg_web_anon_write | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_gpg_web_anon_write
   - medium_severity
@@ -1617,19 +1716,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_gpg_web_anon_write | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean gpg_web_anon_write accordingly
   seboolean:
     name: gpg_web_anon_write
     state: '{{ var_gpg_web_anon_write }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_gpg_web_anon_write | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_gpg_web_anon_write
   - medium_severity
@@ -1637,18 +1737,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_gpg_web_anon_write | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_abrt_handle_event | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_abrt_handle_event
   - medium_severity
@@ -1658,19 +1759,20 @@
   - no_reboot_needed
   - CCE-80420-3
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_abrt_handle_event | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean abrt_handle_event accordingly
   seboolean:
     name: abrt_handle_event
     state: '{{ var_abrt_handle_event }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_abrt_handle_event | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_abrt_handle_event
   - medium_severity
@@ -1680,18 +1782,19 @@
   - no_reboot_needed
   - CCE-80420-3
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_abrt_handle_event | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_xdm_sysadm_login | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_sysadm_login
   - medium_severity
@@ -1699,19 +1802,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_xdm_sysadm_login | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xdm_sysadm_login accordingly
   seboolean:
     name: xdm_sysadm_login
     state: '{{ var_xdm_sysadm_login }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_xdm_sysadm_login | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_sysadm_login
   - medium_severity
@@ -1719,18 +1823,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_xdm_sysadm_login | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_xdm_write_home | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_write_home
   - medium_severity
@@ -1738,19 +1843,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_xdm_write_home | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xdm_write_home accordingly
   seboolean:
     name: xdm_write_home
     state: '{{ var_xdm_write_home }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_xdm_write_home | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xdm_write_home
   - medium_severity
@@ -1758,18 +1864,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_xdm_write_home | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_domain_fd_use | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_domain_fd_use
   - medium_severity
@@ -1777,19 +1884,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_domain_fd_use | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean domain_fd_use accordingly
   seboolean:
     name: domain_fd_use
     state: '{{ var_domain_fd_use }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_domain_fd_use | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_domain_fd_use
   - medium_severity
@@ -1797,18 +1905,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_domain_fd_use | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_auditadm_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_auditadm_exec_content
   - medium_severity
@@ -1818,19 +1927,20 @@
   - no_reboot_needed
   - CCE-80424-5
   - NIST-800-171-80424-5
-  when:
-  - sebool_auditadm_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean auditadm_exec_content accordingly
   seboolean:
     name: auditadm_exec_content
     state: '{{ var_auditadm_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_auditadm_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_auditadm_exec_content
   - medium_severity
@@ -1840,18 +1950,19 @@
   - no_reboot_needed
   - CCE-80424-5
   - NIST-800-171-80424-5
-  when:
-  - sebool_auditadm_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_deny_execmem | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_deny_execmem
   - medium_severity
@@ -1859,19 +1970,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_deny_execmem | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean deny_execmem accordingly
   seboolean:
     name: deny_execmem
     state: '{{ var_deny_execmem }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_deny_execmem | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_deny_execmem
   - medium_severity
@@ -1879,18 +1991,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_deny_execmem | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_selinuxuser_tcp_server | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_tcp_server
   - medium_severity
@@ -1898,19 +2011,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_selinuxuser_tcp_server | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_tcp_server accordingly
   seboolean:
     name: selinuxuser_tcp_server
     state: '{{ var_selinuxuser_tcp_server }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_selinuxuser_tcp_server | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_tcp_server
   - medium_severity
@@ -1918,18 +2032,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_selinuxuser_tcp_server | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_xserver_object_manager | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xserver_object_manager
   - medium_severity
@@ -1937,19 +2052,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_xserver_object_manager | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xserver_object_manager accordingly
   seboolean:
     name: xserver_object_manager
     state: '{{ var_xserver_object_manager }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_xserver_object_manager | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xserver_object_manager
   - medium_severity
@@ -1957,18 +2073,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_xserver_object_manager | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_mock_enable_homedirs | bool
+  - low_complexity | bool
   tags:
   - sebool_mock_enable_homedirs
   - medium_severity
@@ -1976,19 +2093,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_mock_enable_homedirs | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean mock_enable_homedirs accordingly
   seboolean:
     name: mock_enable_homedirs
     state: '{{ var_mock_enable_homedirs }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_mock_enable_homedirs | bool
+  - low_complexity | bool
   tags:
   - sebool_mock_enable_homedirs
   - medium_severity
@@ -1996,18 +2114,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_mock_enable_homedirs | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_secure_mode_policyload | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secure_mode_policyload
   - medium_severity
@@ -2015,19 +2134,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_secure_mode_policyload | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean secure_mode_policyload accordingly
   seboolean:
     name: secure_mode_policyload
     state: '{{ var_secure_mode_policyload }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_secure_mode_policyload | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secure_mode_policyload
   - medium_severity
@@ -2035,18 +2155,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_secure_mode_policyload | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_abrt_upload_watch_anon_write | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_abrt_upload_watch_anon_write
   - medium_severity
@@ -2056,19 +2177,20 @@
   - no_reboot_needed
   - CCE-80421-1
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - sebool_abrt_upload_watch_anon_write | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean abrt_upload_watch_anon_write accordingly
   seboolean:
     name: abrt_upload_watch_anon_write
     state: '{{ var_abrt_upload_watch_anon_write }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_abrt_upload_watch_anon_write | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_abrt_upload_watch_anon_write
   - medium_severity
@@ -2078,18 +2200,19 @@
   - no_reboot_needed
   - CCE-80421-1
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - sebool_abrt_upload_watch_anon_write | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_share_music | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_share_music
   - medium_severity
@@ -2097,19 +2220,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_share_music | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_share_music accordingly
   seboolean:
     name: selinuxuser_share_music
     state: '{{ var_selinuxuser_share_music }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_share_music | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_share_music
   - medium_severity
@@ -2117,18 +2241,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_share_music | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_logadm_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_logadm_exec_content
   - medium_severity
@@ -2136,19 +2261,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_logadm_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean logadm_exec_content accordingly
   seboolean:
     name: logadm_exec_content
     state: '{{ var_logadm_exec_content }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_logadm_exec_content | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_logadm_exec_content
   - medium_severity
@@ -2156,18 +2282,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_logadm_exec_content | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_execheap | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_execheap
   - medium_severity
@@ -2175,19 +2302,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_execheap | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_execheap accordingly
   seboolean:
     name: selinuxuser_execheap
     state: '{{ var_selinuxuser_execheap }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_execheap | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_execheap
   - medium_severity
@@ -2195,18 +2323,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_execheap | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_cron_userdomain_transition | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_cron_userdomain_transition
   - medium_severity
@@ -2214,19 +2343,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_cron_userdomain_transition | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean cron_userdomain_transition accordingly
   seboolean:
     name: cron_userdomain_transition
     state: '{{ var_cron_userdomain_transition }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_cron_userdomain_transition | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_cron_userdomain_transition
   - medium_severity
@@ -2234,18 +2364,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_cron_userdomain_transition | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_secure_mode_insmod | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secure_mode_insmod
   - medium_severity
@@ -2253,19 +2384,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_secure_mode_insmod | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean secure_mode_insmod accordingly
   seboolean:
     name: secure_mode_insmod
     state: '{{ var_secure_mode_insmod }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_secure_mode_insmod | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_secure_mode_insmod
   - medium_severity
@@ -2273,18 +2405,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_secure_mode_insmod | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_unconfined_login | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_unconfined_login
   - medium_severity
@@ -2292,19 +2425,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_unconfined_login | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean unconfined_login accordingly
   seboolean:
     name: unconfined_login
     state: '{{ var_unconfined_login }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_unconfined_login | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_unconfined_login
   - medium_severity
@@ -2312,18 +2446,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_unconfined_login | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_logging_syslogd_can_sendmail | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_logging_syslogd_can_sendmail
   - medium_severity
@@ -2331,19 +2466,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_logging_syslogd_can_sendmail | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean logging_syslogd_can_sendmail accordingly
   seboolean:
     name: logging_syslogd_can_sendmail
     state: '{{ var_logging_syslogd_can_sendmail }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_logging_syslogd_can_sendmail | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_logging_syslogd_can_sendmail
   - medium_severity
@@ -2351,18 +2487,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_logging_syslogd_can_sendmail | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_selinuxuser_use_ssh_chroot | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_use_ssh_chroot
   - medium_severity
@@ -2370,19 +2507,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_selinuxuser_use_ssh_chroot | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_use_ssh_chroot accordingly
   seboolean:
     name: selinuxuser_use_ssh_chroot
     state: '{{ var_selinuxuser_use_ssh_chroot }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_selinuxuser_use_ssh_chroot | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_use_ssh_chroot
   - medium_severity
@@ -2390,18 +2528,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_selinuxuser_use_ssh_chroot | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_polyinstantiation_enabled | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_polyinstantiation_enabled
   - medium_severity
@@ -2409,19 +2548,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_polyinstantiation_enabled | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean polyinstantiation_enabled accordingly
   seboolean:
     name: polyinstantiation_enabled
     state: '{{ var_polyinstantiation_enabled }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sebool_polyinstantiation_enabled | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_polyinstantiation_enabled
   - medium_severity
@@ -2429,18 +2569,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - sebool_polyinstantiation_enabled | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_daemons_use_tcp_wrapper | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_daemons_use_tcp_wrapper
   - medium_severity
@@ -2448,19 +2589,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_daemons_use_tcp_wrapper | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean daemons_use_tcp_wrapper accordingly
   seboolean:
     name: daemons_use_tcp_wrapper
     state: '{{ var_daemons_use_tcp_wrapper }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_daemons_use_tcp_wrapper | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_daemons_use_tcp_wrapper
   - medium_severity
@@ -2468,18 +2610,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_daemons_use_tcp_wrapper | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_execmod | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_execmod
   - medium_severity
@@ -2487,19 +2630,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_execmod | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_execmod accordingly
   seboolean:
     name: selinuxuser_execmod
     state: '{{ var_selinuxuser_execmod }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_selinuxuser_execmod | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_execmod
   - medium_severity
@@ -2507,18 +2651,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_selinuxuser_execmod | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_xguest_use_bluetooth | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_use_bluetooth
   - medium_severity
@@ -2526,19 +2671,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_xguest_use_bluetooth | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xguest_use_bluetooth accordingly
   seboolean:
     name: xguest_use_bluetooth
     state: '{{ var_xguest_use_bluetooth }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_xguest_use_bluetooth | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_use_bluetooth
   - medium_severity
@@ -2546,18 +2692,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_xguest_use_bluetooth | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_postgresql_connect_enabled | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_postgresql_connect_enabled
   - medium_severity
@@ -2565,19 +2712,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_postgresql_connect_enabled | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_postgresql_connect_enabled accordingly
   seboolean:
     name: selinuxuser_postgresql_connect_enabled
     state: '{{ var_selinuxuser_postgresql_connect_enabled }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_postgresql_connect_enabled | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_postgresql_connect_enabled
   - medium_severity
@@ -2585,18 +2733,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_postgresql_connect_enabled | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_ping | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_ping
   - medium_severity
@@ -2604,19 +2753,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_ping | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean selinuxuser_ping accordingly
   seboolean:
     name: selinuxuser_ping
     state: '{{ var_selinuxuser_ping }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_selinuxuser_ping | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_selinuxuser_ping
   - medium_severity
@@ -2624,18 +2774,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_selinuxuser_ping | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_abrt_anon_write | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_abrt_anon_write
   - medium_severity
@@ -2645,19 +2796,20 @@
   - no_reboot_needed
   - CCE-80419-5
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_abrt_anon_write | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean abrt_anon_write accordingly
   seboolean:
     name: abrt_anon_write
     state: '{{ var_abrt_anon_write }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_abrt_anon_write | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_abrt_anon_write
   - medium_severity
@@ -2667,18 +2819,19 @@
   - no_reboot_needed
   - CCE-80419-5
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_abrt_anon_write | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_ssh_keysign | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_ssh_keysign
   - medium_severity
@@ -2686,19 +2839,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_ssh_keysign | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean ssh_keysign accordingly
   seboolean:
     name: ssh_keysign
     state: '{{ var_ssh_keysign }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_ssh_keysign | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_ssh_keysign
   - medium_severity
@@ -2706,18 +2860,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_ssh_keysign | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_cron_can_relabel | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_cron_can_relabel
   - medium_severity
@@ -2725,19 +2880,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_cron_can_relabel | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean cron_can_relabel accordingly
   seboolean:
     name: cron_can_relabel
     state: '{{ var_cron_can_relabel }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_cron_can_relabel | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_cron_can_relabel
   - medium_severity
@@ -2745,18 +2901,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_cron_can_relabel | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_xserver_clients_write_xshm | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xserver_clients_write_xshm
   - medium_severity
@@ -2764,19 +2921,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_xserver_clients_write_xshm | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xserver_clients_write_xshm accordingly
   seboolean:
     name: xserver_clients_write_xshm
     state: '{{ var_xserver_clients_write_xshm }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - sebool_xserver_clients_write_xshm | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_xserver_clients_write_xshm
   - medium_severity
@@ -2784,18 +2942,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - sebool_xserver_clients_write_xshm | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_ssh_sysadm_login | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_ssh_sysadm_login
   - medium_severity
@@ -2803,19 +2962,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_ssh_sysadm_login | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean ssh_sysadm_login accordingly
   seboolean:
     name: ssh_sysadm_login
     state: '{{ var_ssh_sysadm_login }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_ssh_sysadm_login | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_ssh_sysadm_login
   - medium_severity
@@ -2823,18 +2983,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_ssh_sysadm_login | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_xguest_mount_media | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_mount_media
   - medium_severity
@@ -2842,19 +3003,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_xguest_mount_media | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean xguest_mount_media accordingly
   seboolean:
     name: xguest_mount_media
     state: '{{ var_xguest_mount_media }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - sebool_xguest_mount_media | bool
+  - low_complexity | bool
   tags:
   - sebool_xguest_mount_media
   - medium_severity
@@ -2862,18 +3024,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - sebool_xguest_mount_media | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_use_ecryptfs_home_dirs | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_use_ecryptfs_home_dirs
   - medium_severity
@@ -2881,19 +3044,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_use_ecryptfs_home_dirs | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean use_ecryptfs_home_dirs accordingly
   seboolean:
     name: use_ecryptfs_home_dirs
     state: '{{ var_use_ecryptfs_home_dirs }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - sebool_use_ecryptfs_home_dirs | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_use_ecryptfs_home_dirs
   - medium_severity
@@ -2901,18 +3065,19 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - sebool_use_ecryptfs_home_dirs | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure libsemanage-python installed
   package:
     name: libsemanage-python
     state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_login_console_enabled | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_login_console_enabled
   - medium_severity
@@ -2920,19 +3085,20 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_login_console_enabled | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set SELinux boolean login_console_enabled accordingly
   seboolean:
     name: login_console_enabled
     state: '{{ var_login_console_enabled }}'
     persistent: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sebool_login_console_enabled | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - sebool_login_console_enabled
   - medium_severity
@@ -2940,13 +3106,6 @@
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  when:
-  - sebool_login_console_enabled | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - enable_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure SELinux State is Enforcing
   lineinfile:
@@ -2985,6 +3144,14 @@
   replace:
     dest: /etc/default/grub
     regexp: selinux=0
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - grub2_enable_selinux | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - grub2_enable_selinux
   - medium_severity
@@ -3002,13 +3169,6 @@
   - NIST-800-53-SI-6(a)
   - NIST-800-171-3.1.2
   - NIST-800-171-3.7.2
-  when:
-  - no_reboot_needed | bool
-  - grub2_enable_selinux | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Configure SELinux Policy
   lineinfile:
@@ -6015,6 +6175,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - service_bluetooth_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_bluetooth_disabled
   - medium_severity
@@ -6030,13 +6198,6 @@
   - NIST-800-53-CM-7
   - NIST-800-53-MP-7
   - NIST-800-171-3.1.16
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - service_bluetooth_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service bluetooth if applicable
   service:
@@ -6045,6 +6206,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - service_bluetooth_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_bluetooth_disabled
   - medium_severity
@@ -6060,13 +6229,6 @@
   - NIST-800-53-CM-7
   - NIST-800-53-MP-7
   - NIST-800-171-3.1.16
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - service_bluetooth_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Set architecture for audit ftruncate tasks
   set_fact:
@@ -12583,7 +12745,7 @@
     all_files:
     - /etc/audit/rules.d/privileged.rules
   when:
-  - find_delete_module.matched == 0
+  - find_delete_module.matched is defined and find_delete_module.matched == 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12612,7 +12774,7 @@
     all_files:
     - '{{ find_delete_module.files | map(attribute=''path'') | list | first }}'
   when:
-  - find_delete_module.matched > 0
+  - find_delete_module.matched is defined and find_delete_module.matched > 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12673,7 +12835,7 @@
     state: present
     create: true
   when:
-  - audit_arch == 'b64'
+  - audit_arch is defined and audit_arch == 'b64'
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12732,7 +12894,7 @@
     line: -a always,exit -F arch=b64 -S delete_module -k module-change
     create: true
   when:
-  - audit_arch == 'b64'
+  - audit_arch is defined and audit_arch == 'b64'
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12819,7 +12981,7 @@
     all_files:
     - /etc/audit/rules.d/privileged.rules
   when:
-  - find_init_module.matched == 0
+  - find_init_module.matched is defined and find_init_module.matched == 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12848,7 +13010,7 @@
     all_files:
     - '{{ find_init_module.files | map(attribute=''path'') | list | first }}'
   when:
-  - find_init_module.matched > 0
+  - find_init_module.matched is defined and find_init_module.matched > 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12909,7 +13071,7 @@
     state: present
     create: true
   when:
-  - audit_arch == 'b64'
+  - audit_arch is defined and audit_arch == 'b64'
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -12968,7 +13130,7 @@
     line: -a always,exit -F arch=b64 -S init_module -k module-change
     create: true
   when:
-  - audit_arch == 'b64'
+  - audit_arch is defined and audit_arch == 'b64'
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
   - medium_severity | bool
@@ -20266,6 +20428,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - service_zebra_disabled | bool
+  - low_complexity | bool
   tags:
   - service_zebra_disabled
   - medium_severity
@@ -20275,13 +20445,6 @@
   - no_reboot_needed
   - CCE-27191-6
   - NIST-800-53-SC-32
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - service_zebra_disabled | bool
-  - low_complexity | bool
 
 - name: Disable socket of service zebra if applicable
   service:
@@ -20290,6 +20453,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - service_zebra_disabled | bool
+  - low_complexity | bool
   tags:
   - service_zebra_disabled
   - medium_severity
@@ -20299,13 +20470,6 @@
   - no_reboot_needed
   - CCE-27191-6
   - NIST-800-53-SC-32
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - service_zebra_disabled | bool
-  - low_complexity | bool
 
 - name: Enable SSH Warning Banner
   lineinfile:
@@ -21099,6 +21263,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_kdump_disabled
   - medium_severity
@@ -21111,13 +21283,6 @@
   - NIST-800-53-CM-7
   - NIST-800-53-CM-6(b)
   - DISA-STIG-RHEL-07-021300
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_kdump_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service kdump if applicable
   service:
@@ -21126,6 +21291,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_kdump_disabled
   - medium_severity
@@ -21138,13 +21311,6 @@
   - NIST-800-53-CM-7
   - NIST-800-53-CM-6(b)
   - DISA-STIG-RHEL-07-021300
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_kdump_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure ypbind is removed
   package:
@@ -21196,6 +21362,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - service_ypbind_disabled | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_ypbind_disabled
   - medium_severity
@@ -21206,13 +21380,6 @@
   - CCE-27385-4
   - NIST-800-53-AC-17(8)
   - NIST-800-53-CM-7
-  when:
-  - service_ypbind_disabled | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service ypbind if applicable
   service:
@@ -21221,6 +21388,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - service_ypbind_disabled | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_ypbind_disabled
   - medium_severity
@@ -21231,13 +21406,6 @@
   - CCE-27385-4
   - NIST-800-53-AC-17(8)
   - NIST-800-53-CM-7
-  when:
-  - service_ypbind_disabled | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure talk-server is removed
   package:
@@ -21405,6 +21573,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - service_telnet_disabled | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_telnet_disabled
   - high_severity
@@ -21418,13 +21594,6 @@
   - NIST-800-53-IA-5(1)(c)
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - service_telnet_disabled | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service telnet if applicable
   service:
@@ -21433,6 +21602,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - service_telnet_disabled | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_telnet_disabled
   - high_severity
@@ -21446,13 +21623,6 @@
   - NIST-800-53-IA-5(1)(c)
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - service_telnet_disabled | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable service rexec
   service:
@@ -21461,6 +21631,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_rexec_disabled | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_rexec_disabled
   - high_severity
@@ -21473,13 +21651,6 @@
   - NIST-800-53-CM-7
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_rexec_disabled | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service rexec if applicable
   service:
@@ -21488,6 +21659,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_rexec_disabled | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_rexec_disabled
   - high_severity
@@ -21500,13 +21679,6 @@
   - NIST-800-53-CM-7
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_rexec_disabled | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable service rlogin
   service:
@@ -21515,6 +21687,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - service_rlogin_disabled | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_rlogin_disabled
   - high_severity
@@ -21528,13 +21708,6 @@
   - NIST-800-53-IA-5(1)(c)
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - service_rlogin_disabled | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service rlogin if applicable
   service:
@@ -21543,6 +21716,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - service_rlogin_disabled | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_rlogin_disabled
   - high_severity
@@ -21556,13 +21737,6 @@
   - NIST-800-53-IA-5(1)(c)
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - service_rlogin_disabled | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - block:
   - name: Detect shosts.equiv Files on the System
@@ -21625,6 +21799,14 @@
     state: stopped
   register: service_result
   failed_when: service_result is failed and ('Could not find the requested service' not in service_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - high_severity | bool
+  - service_rsh_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_rsh_disabled
   - high_severity
@@ -21638,13 +21820,6 @@
   - NIST-800-53-IA-5(1)(c)
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - high_severity | bool
-  - service_rsh_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Disable socket of service rsh if applicable
   service:
@@ -21653,6 +21828,14 @@
     state: stopped
   register: socket_result
   failed_when: socket_result is failed and ('Could not find the requested service' not in socket_result.msg)
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - high_severity | bool
+  - service_rsh_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
   tags:
   - service_rsh_disabled
   - high_severity
@@ -21666,13 +21849,6 @@
   - NIST-800-53-IA-5(1)(c)
   - NIST-800-171-3.1.13
   - NIST-800-171-3.4.7
-  when:
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - high_severity | bool
-  - service_rsh_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
 
 - name: Ensure rsh is removed
   package:
@@ -21734,6 +21910,7 @@
     option: id_provider
     value: files
   when:
+  - test_grep_domain.stdout is defined
   - test_grep_domain.stdout | length < 1
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
@@ -21817,6 +21994,7 @@
     option: id_provider
     value: files
   when:
+  - test_grep_domain.stdout is defined
   - test_grep_domain.stdout | length < 1
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
@@ -21901,6 +22079,7 @@
     option: id_provider
     value: files
   when:
+  - test_grep_domain.stdout is defined
   - test_grep_domain.stdout | length < 1
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - sssd_memcache_timeout | bool
@@ -21985,6 +22164,7 @@
     option: id_provider
     value: files
   when:
+  - test_grep_domain.stdout is defined
   - test_grep_domain.stdout | length < 1
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - no_reboot_needed | bool
