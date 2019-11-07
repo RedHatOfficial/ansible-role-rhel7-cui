@@ -1,702 +1,3 @@
-- name: Unit Service Exists
-  shell: systemctl list-unit-files | grep -q '^kdump.service'
-  register: service_file_exists
-  ignore_errors: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_kdump_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_kdump_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80258-7
-  - NIST-800-53-AC-17(8)
-  - NIST-800-53-CM-7
-  - NIST-800-53-CM-6(b)
-  - DISA-STIG-RHEL-07-021300
-
-- name: Disable service kdump
-  systemd:
-    name: kdump.service
-    enabled: 'no'
-    state: stopped
-    masked: 'yes'
-  when:
-  - service_file_exists.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_kdump_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_kdump_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80258-7
-  - NIST-800-53-AC-17(8)
-  - NIST-800-53-CM-7
-  - NIST-800-53-CM-6(b)
-  - DISA-STIG-RHEL-07-021300
-
-- name: Unit Socket Exists
-  shell: systemctl list-unit-files | grep -q '^kdump.socket'
-  register: socket_file_exists
-  ignore_errors: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_kdump_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_kdump_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80258-7
-  - NIST-800-53-AC-17(8)
-  - NIST-800-53-CM-7
-  - NIST-800-53-CM-6(b)
-  - DISA-STIG-RHEL-07-021300
-
-- name: Disable socket kdump
-  systemd:
-    name: kdump.socket
-    enabled: 'no'
-    state: stopped
-    masked: 'yes'
-  when:
-  - socket_file_exists.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_kdump_disabled | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_kdump_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80258-7
-  - NIST-800-53-AC-17(8)
-  - NIST-800-53-CM-7
-  - NIST-800-53-CM-6(b)
-  - DISA-STIG-RHEL-07-021300
-
-- name: Ensure abrt is removed
-  package:
-    name: abrt
-    state: absent
-  tags:
-  - package_abrt_removed
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-81040-8
-  when:
-  - disable_strategy | bool
-  - package_abrt_removed | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - low_disruption | bool
-  - low_complexity | bool
-
-- name: Rule title of sshd_disable_kerb_auth
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*KerberosAuthentication\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: KerberosAuthentication no
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - sshd_disable_kerb_auth | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_disable_kerb_auth
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80221-5
-  - NIST-800-53-CM-6(c)
-  - NIST-800-171-3.1.12
-  - DISA-STIG-RHEL-07-040440
-
-- name: Rule title of sshd_disable_root_login
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*PermitRootLogin\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: PermitRootLogin no
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - sshd_disable_root_login | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_disable_root_login
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27445-6
-  - NIST-800-53-AC-3
-  - NIST-800-53-AC-6(2)
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-IA-2
-  - NIST-800-53-IA-2(5)
-  - NIST-800-171-3.1.1
-  - NIST-800-171-3.1.5
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-040370
-
-- name: Rule title of disable_host_auth
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*HostbasedAuthentication\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: HostbasedAuthentication no
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - disable_host_auth | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - disable_host_auth
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27413-4
-  - NIST-800-53-AC-3
-  - NIST-800-53-AC-17
-  - NIST-800-53-CM-6(b)
-  - NIST-800-171-3.1.12
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-010470
-
-- name: Set SSH Idle Timeout Interval
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*ClientAliveInterval\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: ClientAliveInterval {{ sshd_idle_timeout_value }}
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - sshd_set_idle_timeout | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_set_idle_timeout
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27433-2
-  - NIST-800-53-AC-2(5)
-  - NIST-800-53-SA-8(i)
-  - NIST-800-53-AC-12
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-SC-10
-  - NIST-800-171-3.1.11
-  - PCI-DSS-Req-8.1.8
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-040320
-
-- name: Rule title of sshd_enable_strictmodes
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*StrictModes\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: StrictModes yes
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - sshd_enable_strictmodes | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_enable_strictmodes
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80222-3
-  - NIST-800-53-AC-6
-  - NIST-800-53-AC-17(b)
-  - NIST-800-171-3.1.12
-  - DISA-STIG-RHEL-07-040450
-
-- name: Rule title of sshd_disable_gssapi_auth
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*GSSAPIAuthentication\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: GSSAPIAuthentication no
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - sshd_disable_gssapi_auth | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_disable_gssapi_auth
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80220-7
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-CM-6(c)
-  - NIST-800-171-3.1.12
-  - DISA-STIG-RHEL-07-040430
-
-- name: Use Only FIPS 140-2 Validated MACs
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*MACs\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: MACs {{ sshd_approved_macs }}
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - sshd_use_approved_macs | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_use_approved_macs
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27455-5
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-AC-17(2)
-  - NIST-800-53-IA-7
-  - NIST-800-53-SC-13
-  - NIST-800-53-MA-4(6)
-  - NIST-800-171-3.1.13
-  - NIST-800-171-3.13.11
-  - NIST-800-171-3.13.8
-  - DISA-STIG-RHEL-07-040400
-
-- name: Use Only FIPS 140-2 Validated Ciphers
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*Ciphers\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - sshd_use_approved_ciphers | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_use_approved_ciphers
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27295-5
-  - NIST-800-53-AC-3
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-AC-17(2)
-  - NIST-800-53-AU-10(5)
-  - NIST-800-53-CM-6(b)
-  - NIST-800-53-IA-5(1)(c)
-  - NIST-800-53-IA-7
-  - NIST-800-53-SI-7
-  - NIST-800-53-SC-13
-  - NIST-800-171-3.1.13
-  - NIST-800-171-3.13.11
-  - NIST-800-171-3.13.8
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-040110
-
-- name: Rule title of sshd_disable_empty_passwords
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*PermitEmptyPasswords\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: PermitEmptyPasswords no
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - sshd_disable_empty_passwords | bool
-  - high_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_disable_empty_passwords
-  - high_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27471-2
-  - NIST-800-53-AC-3
-  - NIST-800-53-AC-6
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-CM-6(b)
-  - NIST-800-171-3.1.1
-  - NIST-800-171-3.1.5
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-010300
-
-- name: Set SSH Client Alive Max Count
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*ClientAliveCountMax\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: ClientAliveCountMax {{ var_sshd_set_keepalive }}
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - sshd_set_keepalive | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_set_keepalive
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27082-7
-  - NIST-800-53-AC-2(5)
-  - NIST-800-53-SA-8
-  - NIST-800-53-AC-12
-  - NIST-800-53-AC-17(b)
-  - NIST-800-53-SC-10
-  - NIST-800-171-3.1.11
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-040340
-
-- name: Rule title of sshd_enable_warning_banner
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*Banner\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: Banner /etc/issue
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - sshd_enable_warning_banner | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_enable_warning_banner
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-27314-4
-  - NIST-800-53-AC-8(a)
-  - NIST-800-53-AC-8(b)
-  - NIST-800-53-AC-8(c)(1)
-  - NIST-800-53-AC-8(c)(2)
-  - NIST-800-53-AC-8(c)(3)
-  - NIST-800-53-AC-17(b)
-  - NIST-800-171-3.1.9
-  - CJIS-5.5.6
-  - DISA-STIG-RHEL-07-040170
-
-- name: Disable SSH Support for Rhosts RSA Authentication
-  block:
-  - name: Deduplicate values from /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: false
-      regexp: (?i)^\s*RhostsRSAAuthentication\s+
-      state: absent
-  - name: Insert correct line to /etc/ssh/sshd_config
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      create: true
-      line: RhostsRSAAuthentication no
-      state: present
-      insertbefore: ^Match
-      validate: /usr/sbin/sshd -t -f %s
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - sshd_disable_rhosts_rsa | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sshd_disable_rhosts_rsa
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80373-4
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-AC-17(b)
-  - NIST-800-171-3.1.12
-  - DISA-STIG-RHEL-07-040330
-
-- name: Unit Service Exists
-  shell: systemctl list-unit-files | grep -q '^rpcbind.service'
-  register: service_file_exists
-  ignore_errors: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - unknown_severity | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_rpcbind_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_rpcbind_disabled
-  - unknown_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80230-6
-
-- name: Disable service rpcbind
-  systemd:
-    name: rpcbind.service
-    enabled: 'no'
-    state: stopped
-    masked: 'yes'
-  when:
-  - service_file_exists.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - unknown_severity | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_rpcbind_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_rpcbind_disabled
-  - unknown_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80230-6
-
-- name: Unit Socket Exists
-  shell: systemctl list-unit-files | grep -q '^rpcbind.socket'
-  register: socket_file_exists
-  ignore_errors: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - unknown_severity | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_rpcbind_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_rpcbind_disabled
-  - unknown_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80230-6
-
-- name: Disable socket rpcbind
-  systemd:
-    name: rpcbind.socket
-    enabled: 'no'
-    state: stopped
-    masked: 'yes'
-  when:
-  - socket_file_exists.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - unknown_severity | bool
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - service_rpcbind_disabled | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_rpcbind_disabled
-  - unknown_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80230-6
-
 - name: Check existence of yum on Fedora
   stat:
     path: /etc/yum.conf
@@ -902,17 +203,40 @@
   - medium_disruption | bool
 
 - name: Read signatures in GPG key
-  shell: 'set -o pipefail
-
-    gpg --with-fingerprint --with-colons "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release" | grep "^fpr" | cut -d ":" -f 10
-
-    '
+  command: gpg --with-fingerprint --with-colons "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
   args:
     warn: false
-    executable: /bin/bash
   changed_when: false
   register: gpg_fingerprints
   check_mode: false
+  tags:
+  - ensure_redhat_gpgkey_installed
+  - high_severity
+  - restrict_strategy
+  - medium_complexity
+  - medium_disruption
+  - no_reboot_needed
+  - CCE-26957-1
+  - NIST-800-53-CM-5(3)
+  - NIST-800-53-CM-11(a)
+  - NIST-800-53-SI-7
+  - NIST-800-53-MA-1(b)
+  - NIST-800-171-3.4.8
+  - PCI-DSS-Req-6.2
+  - CJIS-5.10.4.1
+  when:
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - high_severity | bool
+  - ensure_redhat_gpgkey_installed | bool
+  - medium_complexity | bool
+  - medium_disruption | bool
+
+- name: Set Fact - Installed GPG Fingerprints
+  set_fact:
+    gpg_installed_fingerprints: '{{ gpg_fingerprints.stdout | regex_findall(''^pub.*
+
+      (?:^fpr[:]*)([0-9A-Fa-f]*)'', ''\1'') | list }}'
   tags:
   - ensure_redhat_gpgkey_installed
   - high_severity
@@ -968,8 +292,8 @@
     key: /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
   when:
   - gpg_key_directory_permission.stat.mode <= '0755'
-  - ( gpg_fingerprints.stdout_lines | difference(gpg_valid_fingerprints)) | length == 0
-  - gpg_fingerprints.stdout_lines | length > 0
+  - (gpg_installed_fingerprints | difference(gpg_valid_fingerprints)) | length == 0
+  - gpg_installed_fingerprints | length > 0
   - ansible_distribution == "RedHat"
   - no_reboot_needed | bool
   - restrict_strategy | bool
@@ -1072,6 +396,7 @@
   - low_disruption
   - no_reboot_needed
   - CCE-80358-5
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-53-SC-13
@@ -1101,6 +426,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1114,7 +440,7 @@
     regexp: ^#?PRELINKING
     line: PRELINKING=no
   when:
-  - prelink_exists.stat.exists == True
+  - prelink_exists.stat.exists
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - high_complexity | bool
   - restrict_strategy | bool
@@ -1132,6 +458,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1142,7 +469,7 @@
 - name: revert prelinking binaries
   command: /usr/sbin/prelink -ua
   when:
-  - prelink_exists.stat.exists == True
+  - prelink_exists.stat.exists
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - high_complexity | bool
   - restrict_strategy | bool
@@ -1160,6 +487,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1189,6 +517,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1220,6 +549,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1249,6 +579,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1276,6 +607,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1305,6 +637,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1336,6 +669,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1367,6 +701,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1395,6 +730,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1424,6 +760,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1455,6 +792,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1486,6 +824,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1513,6 +852,7 @@
   - CCE-80359-3
   - NIST-800-53-IA-5
   - NIST-800-53-SC-13
+  - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-17(2)
   - NIST-800-53-IA-7
   - NIST-800-171-3.13.8
@@ -1632,38 +972,10 @@
   - medium_disruption | bool
   - low_complexity | bool
 
-- name: Ensure kernel module 'usb-storage' is disabled
-  lineinfile:
-    create: true
-    dest: /etc/modprobe.d/usb-storage.conf
-    regexp: usb-storage
-    line: install usb-storage /bin/true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - medium_severity | bool
-  - medium_disruption | bool
-  - reboot_required | bool
-  - low_complexity | bool
-  tags:
-  - kernel_module_usb-storage_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - medium_disruption
-  - reboot_required
-  - CCE-27277-3
-  - NIST-800-53-AC-19(a)
-  - NIST-800-53-AC-19(d)
-  - NIST-800-53-AC-19(e)
-  - NIST-800-53-IA-3
-  - NIST-800-53-MP-7
-  - NIST-800-171-3.1.21
-  - DISA-STIG-RHEL-07-020100
-
-- name: Unit Service Exists
-  shell: systemctl list-unit-files | grep -q '^autofs.service'
+- name: Unit Service Exists - autofs.service
+  command: systemctl list-unit-files autofs.service
   register: service_file_exists
+  changed_when: false
   ignore_errors: true
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -1695,7 +1007,7 @@
     state: stopped
     masked: 'yes'
   when:
-  - service_file_exists.rc == 0
+  - '"autofs.service" in service_file_exists.stdout_lines[1]'
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - disable_strategy | bool
   - no_reboot_needed | bool
@@ -1718,9 +1030,10 @@
   - NIST-800-171-3.4.6
   - DISA-STIG-RHEL-07-020110
 
-- name: Unit Socket Exists
-  shell: systemctl list-unit-files | grep -q '^autofs.socket'
+- name: Unit Socket Exists - autofs.socket
+  command: systemctl list-unit-files autofs.socket
   register: socket_file_exists
+  changed_when: false
   ignore_errors: true
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -1752,7 +1065,7 @@
     state: stopped
     masked: 'yes'
   when:
-  - socket_file_exists.rc == 0
+  - '"autofs.socket" in socket_file_exists.stdout_lines[1]'
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - disable_strategy | bool
   - no_reboot_needed | bool
@@ -1774,6 +1087,35 @@
   - NIST-800-53-IA-3
   - NIST-800-171-3.4.6
   - DISA-STIG-RHEL-07-020110
+
+- name: Ensure kernel module 'usb-storage' is disabled
+  lineinfile:
+    create: true
+    dest: /etc/modprobe.d/usb-storage.conf
+    regexp: usb-storage
+    line: install usb-storage /bin/true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - medium_severity | bool
+  - medium_disruption | bool
+  - reboot_required | bool
+  - low_complexity | bool
+  tags:
+  - kernel_module_usb-storage_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - medium_disruption
+  - reboot_required
+  - CCE-27277-3
+  - NIST-800-53-AC-19(a)
+  - NIST-800-53-AC-19(d)
+  - NIST-800-53-AC-19(e)
+  - NIST-800-53-IA-3
+  - NIST-800-53-MP-7
+  - NIST-800-171-3.1.21
+  - DISA-STIG-RHEL-07-020100
 
 - name: Ensure kernel module 'cramfs' is disabled
   lineinfile:
@@ -2648,6 +1990,163 @@
   - NIST-800-53-CM-7
   - NIST-800-53-MP-2
 
+- name: check vsyscall argument exists
+  command: grep 'GRUB_CMDLINE_LINUX.*vsyscall=' /etc/default/grub
+  failed_when: false
+  register: argcheck
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - restrict_strategy | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - medium_complexity | bool
+  - grub2_vsyscall_argument | bool
+  - low_disruption | bool
+  tags:
+  - grub2_vsyscall_argument
+  - medium_severity
+  - restrict_strategy
+  - medium_complexity
+  - low_disruption
+  - reboot_required
+  - CCE-82159-5
+
+- name: replace existing vsyscall argument
+  replace:
+    path: /etc/default/grub
+    regexp: vsyscall=.
+    replace: vsyscall=none
+  when:
+  - argcheck.rc == 0
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - restrict_strategy | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - medium_complexity | bool
+  - grub2_vsyscall_argument | bool
+  - low_disruption | bool
+  tags:
+  - grub2_vsyscall_argument
+  - medium_severity
+  - restrict_strategy
+  - medium_complexity
+  - low_disruption
+  - reboot_required
+  - CCE-82159-5
+
+- name: add vsyscall argument
+  replace:
+    path: /etc/default/grub
+    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    replace: \1 vsyscall=none"
+  when:
+  - argcheck.rc != 0
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - restrict_strategy | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - medium_complexity | bool
+  - grub2_vsyscall_argument | bool
+  - low_disruption | bool
+  tags:
+  - grub2_vsyscall_argument
+  - medium_severity
+  - restrict_strategy
+  - medium_complexity
+  - low_disruption
+  - reboot_required
+  - CCE-82159-5
+
+- name: update bootloader menu
+  command: /sbin/grubby --update-kernel=ALL --args="vsyscall=none"
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - restrict_strategy | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - medium_complexity | bool
+  - grub2_vsyscall_argument | bool
+  - low_disruption | bool
+  tags:
+  - grub2_vsyscall_argument
+  - medium_severity
+  - restrict_strategy
+  - medium_complexity
+  - low_disruption
+  - reboot_required
+  - CCE-82159-5
+
+- name: Ensure sysctl kernel.yama.ptrace_scope is set to 1
+  sysctl:
+    name: kernel.yama.ptrace_scope
+    value: '1'
+    state: present
+    reload: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - sysctl_kernel_yama_ptrace_scope | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - medium_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sysctl_kernel_yama_ptrace_scope
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - medium_disruption
+  - reboot_required
+  - CCE-81058-0
+
+- name: Ensure sysctl kernel.kexec_load_disabled is set to 1
+  sysctl:
+    name: kernel.kexec_load_disabled
+    value: '1'
+    state: present
+    reload: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - sysctl_kernel_kexec_load_disabled | bool
+  - medium_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sysctl_kernel_kexec_load_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - medium_disruption
+  - reboot_required
+  - CCE-81056-4
+
+- name: Ensure sysctl kernel.dmesg_restrict is set to 1
+  sysctl:
+    name: kernel.dmesg_restrict
+    value: '1'
+    state: present
+    reload: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - reboot_required | bool
+  - medium_severity | bool
+  - medium_disruption | bool
+  - sysctl_kernel_dmesg_restrict | bool
+  - low_complexity | bool
+  tags:
+  - sysctl_kernel_dmesg_restrict
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - medium_disruption
+  - reboot_required
+  - CCE-27050-4
+  - NIST-800-53-SI-11
+  - NIST-800-171-3.1.5
+
 - name: Ensure sysctl kernel.kptr_restrict is set to 1
   sysctl:
     name: kernel.kptr_restrict
@@ -2865,163 +2364,6 @@
   - restrict_strategy | bool
   - low_disruption | bool
   - low_complexity | bool
-
-- name: check vsyscall argument exists
-  command: grep 'GRUB_CMDLINE_LINUX.*vsyscall=' /etc/default/grub
-  failed_when: false
-  register: argcheck
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - restrict_strategy | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - medium_complexity | bool
-  - grub2_vsyscall_argument | bool
-  - low_disruption | bool
-  tags:
-  - grub2_vsyscall_argument
-  - medium_severity
-  - restrict_strategy
-  - medium_complexity
-  - low_disruption
-  - reboot_required
-  - CCE-82159-5
-
-- name: replace existing vsyscall argument
-  replace:
-    path: /etc/default/grub
-    regexp: vsyscall=.
-    replace: vsyscall=none
-  when:
-  - argcheck.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - restrict_strategy | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - medium_complexity | bool
-  - grub2_vsyscall_argument | bool
-  - low_disruption | bool
-  tags:
-  - grub2_vsyscall_argument
-  - medium_severity
-  - restrict_strategy
-  - medium_complexity
-  - low_disruption
-  - reboot_required
-  - CCE-82159-5
-
-- name: add vsyscall argument
-  replace:
-    path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 vsyscall=none"
-  when:
-  - argcheck.rc != 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - restrict_strategy | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - medium_complexity | bool
-  - grub2_vsyscall_argument | bool
-  - low_disruption | bool
-  tags:
-  - grub2_vsyscall_argument
-  - medium_severity
-  - restrict_strategy
-  - medium_complexity
-  - low_disruption
-  - reboot_required
-  - CCE-82159-5
-
-- name: update bootloader menu
-  command: /sbin/grubby --update-kernel=ALL --args="vsyscall=none"
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - restrict_strategy | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - medium_complexity | bool
-  - grub2_vsyscall_argument | bool
-  - low_disruption | bool
-  tags:
-  - grub2_vsyscall_argument
-  - medium_severity
-  - restrict_strategy
-  - medium_complexity
-  - low_disruption
-  - reboot_required
-  - CCE-82159-5
-
-- name: Ensure sysctl kernel.yama.ptrace_scope is set to 1
-  sysctl:
-    name: kernel.yama.ptrace_scope
-    value: '1'
-    state: present
-    reload: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - sysctl_kernel_yama_ptrace_scope | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - medium_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sysctl_kernel_yama_ptrace_scope
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - medium_disruption
-  - reboot_required
-  - CCE-81058-0
-
-- name: Ensure sysctl kernel.kexec_load_disabled is set to 1
-  sysctl:
-    name: kernel.kexec_load_disabled
-    value: '1'
-    state: present
-    reload: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - sysctl_kernel_kexec_load_disabled | bool
-  - medium_disruption | bool
-  - low_complexity | bool
-  tags:
-  - sysctl_kernel_kexec_load_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - medium_disruption
-  - reboot_required
-  - CCE-81056-4
-
-- name: Ensure sysctl kernel.dmesg_restrict is set to 1
-  sysctl:
-    name: kernel.dmesg_restrict
-    value: '1'
-    state: present
-    reload: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - reboot_required | bool
-  - medium_severity | bool
-  - medium_disruption | bool
-  - sysctl_kernel_dmesg_restrict | bool
-  - low_complexity | bool
-  tags:
-  - sysctl_kernel_dmesg_restrict
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - medium_disruption
-  - reboot_required
-  - CCE-27050-4
-  - NIST-800-53-SI-11
-  - NIST-800-171-3.1.5
 
 - name: Ensure kernel module 'dccp' is disabled
   lineinfile:
@@ -3742,144 +3084,50 @@
   - NIST-800-171-3.4.7
   - DISA-STIG-RHEL-07-040520
 
-- name: Configure auditd Flush Priority
-  lineinfile:
-    dest: /etc/audit/auditd.conf
-    regexp: ^\s*flush\s*=\s*.*$
-    line: flush = {{ var_auditd_flush }}
-    state: present
-    create: true
+- name: Enable service auditd
+  block:
+  - name: Gather the package facts
+    package_facts:
+      manager: auto
+  - name: Enable service auditd
+    service:
+      name: auditd
+      enabled: 'yes'
+      state: started
+    when:
+    - '"audit" in ansible_facts.packages'
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - auditd_data_retention_flush | bool
   - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
+  - high_severity | bool
+  - enable_strategy | bool
+  - service_auditd_enabled | bool
   - low_disruption | bool
   - low_complexity | bool
   tags:
-  - auditd_data_retention_flush
-  - medium_severity
-  - restrict_strategy
+  - service_auditd_enabled
+  - high_severity
+  - enable_strategy
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  - CCE-27331-8
-  - NIST-800-53-AU-9
+  - CCE-27407-6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AU-3
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-1(b)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(a)
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-IR-5
   - NIST-800-53-AU-12(1)
   - NIST-800-171-3.3.1
-
-- name: Search /etc/audit/rules.d for audit rule entries
-  find:
-    paths: /etc/audit/rules.d
-    recurse: false
-    contains: ^.*dir=/var/log/audit/.*$
-    patterns: '*.rules'
-  register: find_var_log_audit
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - directory_access_var_log_audit | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - directory_access_var_log_audit
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-82071-2
-
-- name: Use /etc/audit/rules.d/access-audit-trail.rules as the recipient for the rule
-  set_fact:
-    all_files:
-    - /etc/audit/rules.d/access-audit-trail.rules
-  when:
-  - find_var_log_audit.matched == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - directory_access_var_log_audit | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - directory_access_var_log_audit
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-82071-2
-
-- name: Use matched file as the recipient for the rule
-  set_fact:
-    all_files:
-    - '{{ find_var_log_audit.files | map(attribute=''path'') | list | first }}'
-  when:
-  - find_var_log_audit.matched > 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - directory_access_var_log_audit | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - directory_access_var_log_audit
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-82071-2
-
-- name: Inserts/replaces the /var/log/audit/ rule in rules.d
-  lineinfile:
-    path: '{{ all_files[0] }}'
-    line: -a always,exit -F dir=/var/log/audit/ -F perm=r -F auid>=1000 -F auid!=unset -F key=access-audit-trail
-    create: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - directory_access_var_log_audit | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - directory_access_var_log_audit
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-82071-2
-
-- name: Inserts/replaces the /var/log/audit/ rule in audit.rules
-  lineinfile:
-    path: /etc/audit/audit.rules
-    line: -a always,exit -F dir=/var/log/audit/ -F perm=r -F auid>=1000 -F auid!=unset -F key=access-audit-trail
-    create: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - directory_access_var_log_audit | bool
-  - restrict_strategy | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - directory_access_var_log_audit
-  - medium_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-82071-2
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - PCI-DSS-Req-10.1
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-07-030000
 
 - name: check audit_backlog_limit argument exists
   command: grep 'GRUB_CMDLINE_LINUX.*audit_backlog_limit=' /etc/default/grub
@@ -3996,6 +3244,7 @@
   - NIST-800-53-AU-10
   - NIST-800-53-AU-12
   - NIST-800-53-IR-5
+  - NIST-800-53-AU-12(1)
   - NIST-800-171-3.3.1
   - PCI-DSS-Req-10.3
   - CJIS-5.4.1.1
@@ -4031,6 +3280,7 @@
   - NIST-800-53-AU-10
   - NIST-800-53-AU-12
   - NIST-800-53-IR-5
+  - NIST-800-53-AU-12(1)
   - NIST-800-171-3.3.1
   - PCI-DSS-Req-10.3
   - CJIS-5.4.1.1
@@ -4066,6 +3316,7 @@
   - NIST-800-53-AU-10
   - NIST-800-53-AU-12
   - NIST-800-53-IR-5
+  - NIST-800-53-AU-12(1)
   - NIST-800-171-3.3.1
   - PCI-DSS-Req-10.3
   - CJIS-5.4.1.1
@@ -4097,77 +3348,129 @@
   - NIST-800-53-AU-10
   - NIST-800-53-AU-12
   - NIST-800-53-IR-5
+  - NIST-800-53-AU-12(1)
   - NIST-800-171-3.3.1
   - PCI-DSS-Req-10.3
   - CJIS-5.4.1.1
 
-- name: Enable service auditd
-  block:
-  - name: Gather the package facts
-    package_facts:
-      manager: auto
-  - name: Enable service auditd
-    service:
-      name: auditd
-      enabled: 'yes'
-      state: started
-    when:
-    - '"audit" in ansible_facts.packages'
+- name: Configure auditd Flush Priority
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    regexp: ^\s*flush\s*=\s*.*$
+    line: flush = {{ var_auditd_flush }}
+    state: present
+    create: true
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - auditd_data_retention_flush | bool
   - no_reboot_needed | bool
-  - high_severity | bool
-  - enable_strategy | bool
-  - service_auditd_enabled | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
   - low_disruption | bool
   - low_complexity | bool
   tags:
-  - service_auditd_enabled
-  - high_severity
-  - enable_strategy
+  - auditd_data_retention_flush
+  - medium_severity
+  - restrict_strategy
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  - CCE-27407-6
-  - NIST-800-53-AC-2(g)
-  - NIST-800-53-AU-3
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-1(b)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-12(a)
-  - NIST-800-53-AU-12(c)
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-IR-5
+  - CCE-27331-8
+  - NIST-800-53-AU-9
+  - NIST-800-53-AU-12(1)
   - NIST-800-171-3.3.1
-  - NIST-800-171-3.3.2
-  - NIST-800-171-3.3.6
-  - PCI-DSS-Req-10.1
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-07-030000
 
-- name: Ensure screen is installed
-  package:
-    name: screen
-    state: present
+- name: Unit Service Exists - debug-shell.service
+  command: systemctl list-unit-files debug-shell.service
+  register: service_file_exists
+  changed_when: false
+  ignore_errors: true
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - package_screen_installed | bool
+  - disable_strategy | bool
   - no_reboot_needed | bool
   - medium_severity | bool
-  - enable_strategy | bool
   - low_disruption | bool
   - low_complexity | bool
   tags:
-  - package_screen_installed
+  - service_debug-shell_disabled
   - medium_severity
-  - enable_strategy
+  - disable_strategy
   - low_complexity
   - low_disruption
   - no_reboot_needed
-  - CCE-27351-6
-  - NIST-800-53-AC-11(a)
-  - NIST-800-171-3.1.10
-  - DISA-STIG-RHEL-07-010090
+  - CCE-80206-6
+  - NIST-800-171-3.4.5
+
+- name: Disable service debug-shell
+  systemd:
+    name: debug-shell.service
+    enabled: 'no'
+    state: stopped
+    masked: 'yes'
+  when:
+  - '"debug-shell.service" in service_file_exists.stdout_lines[1]'
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_debug-shell_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80206-6
+  - NIST-800-171-3.4.5
+
+- name: Unit Socket Exists - debug-shell.socket
+  command: systemctl list-unit-files debug-shell.socket
+  register: socket_file_exists
+  changed_when: false
+  ignore_errors: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_debug-shell_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80206-6
+  - NIST-800-171-3.4.5
+
+- name: Disable socket debug-shell
+  systemd:
+    name: debug-shell.socket
+    enabled: 'no'
+    state: stopped
+    masked: 'yes'
+  when:
+  - '"debug-shell.socket" in socket_file_exists.stdout_lines[1]'
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_debug-shell_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80206-6
+  - NIST-800-171-3.4.5
 
 - name: Disable Ctrl-Alt-Del Reboot Activation
   systemd:
@@ -4242,102 +3545,12 @@
   - NIST-800-171-3.1.2
   - NIST-800-171-3.4.5
 
-- name: Unit Service Exists
-  shell: systemctl list-unit-files | grep -q '^debug-shell.service'
-  register: service_file_exists
-  ignore_errors: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_debug-shell_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80206-6
-  - NIST-800-171-3.4.5
-
-- name: Disable service debug-shell
-  systemd:
-    name: debug-shell.service
-    enabled: 'no'
-    state: stopped
-    masked: 'yes'
-  when:
-  - service_file_exists.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_debug-shell_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80206-6
-  - NIST-800-171-3.4.5
-
-- name: Unit Socket Exists
-  shell: systemctl list-unit-files | grep -q '^debug-shell.socket'
-  register: socket_file_exists
-  ignore_errors: true
-  when:
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_debug-shell_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80206-6
-  - NIST-800-171-3.4.5
-
-- name: Disable socket debug-shell
-  systemd:
-    name: debug-shell.socket
-    enabled: 'no'
-    state: stopped
-    masked: 'yes'
-  when:
-  - socket_file_exists.rc == 0
-  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
-  - disable_strategy | bool
-  - no_reboot_needed | bool
-  - medium_severity | bool
-  - low_disruption | bool
-  - low_complexity | bool
-  tags:
-  - service_debug-shell_disabled
-  - medium_severity
-  - disable_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-80206-6
-  - NIST-800-171-3.4.5
-
 - name: require single user mode password
   lineinfile:
     create: true
     dest: /usr/lib/systemd/system/rescue.service
     regexp: ^#?ExecStart=
-    line: ExecStart=-/sbin/sulogin rescue
+    line: ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"
   when:
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
   - require_singleuser_auth | bool
@@ -4383,6 +3596,57 @@
   - no_reboot_needed | bool
   - disable_ctrlaltdel_burstaction | bool
   - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+
+- name: Ensure screen is installed
+  package:
+    name: screen
+    state: present
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - package_screen_installed | bool
+  - no_reboot_needed | bool
+  - medium_severity | bool
+  - enable_strategy | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - package_screen_installed
+  - medium_severity
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27351-6
+  - NIST-800-53-AC-11(a)
+  - NIST-800-171-3.1.10
+  - DISA-STIG-RHEL-07-010090
+
+- name: Limit the Number of Concurrent Login Sessions Allowed Per User
+  lineinfile:
+    state: present
+    dest: /etc/security/limits.conf
+    insertbefore: ^# End of file
+    regexp: ^#?\*.*maxlogins
+    line: '*           hard    maxlogins     {{ var_accounts_max_concurrent_login_sessions }}'
+    create: true
+  tags:
+  - accounts_max_concurrent_login_sessions
+  - low_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-82041-5
+  - NIST-800-53-AC-10
+  - CJIS-5.5.2.2
+  - DISA-STIG-RHEL-07-040000
+  when:
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - accounts_max_concurrent_login_sessions | bool
+  - low_severity | bool
   - low_disruption | bool
   - low_complexity | bool
 
@@ -4449,33 +3713,6 @@
   - accounts_umask_etc_csh_cshrc | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - low_disruption | bool
-  - low_complexity | bool
-
-- name: Limit the Number of Concurrent Login Sessions Allowed Per User
-  lineinfile:
-    state: present
-    dest: /etc/security/limits.conf
-    insertbefore: ^# End of file
-    regexp: ^#?\*.*maxlogins
-    line: '*           hard    maxlogins     {{ var_accounts_max_concurrent_login_sessions }}'
-    create: true
-  tags:
-  - accounts_max_concurrent_login_sessions
-  - low_severity
-  - restrict_strategy
-  - low_complexity
-  - low_disruption
-  - no_reboot_needed
-  - CCE-82041-5
-  - NIST-800-53-AC-10
-  - CJIS-5.5.2.2
-  - DISA-STIG-RHEL-07-040000
-  when:
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - accounts_max_concurrent_login_sessions | bool
-  - low_severity | bool
   - low_disruption | bool
   - low_complexity | bool
 
@@ -5347,3 +4584,718 @@
   - medium_severity | bool
   - low_disruption | bool
   - low_complexity | bool
+
+- name: Ensure abrt is removed
+  package:
+    name: abrt
+    state: absent
+  tags:
+  - package_abrt_removed
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-81040-8
+  when:
+  - disable_strategy | bool
+  - package_abrt_removed | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - low_disruption | bool
+  - low_complexity | bool
+
+- name: Unit Service Exists - kdump.service
+  command: systemctl list-unit-files kdump.service
+  register: service_file_exists
+  changed_when: false
+  ignore_errors: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_kdump_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80258-7
+  - NIST-800-53-AC-17(8)
+  - NIST-800-53-CM-7
+  - NIST-800-53-CM-6(b)
+  - DISA-STIG-RHEL-07-021300
+
+- name: Disable service kdump
+  systemd:
+    name: kdump.service
+    enabled: 'no'
+    state: stopped
+    masked: 'yes'
+  when:
+  - '"kdump.service" in service_file_exists.stdout_lines[1]'
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_kdump_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80258-7
+  - NIST-800-53-AC-17(8)
+  - NIST-800-53-CM-7
+  - NIST-800-53-CM-6(b)
+  - DISA-STIG-RHEL-07-021300
+
+- name: Unit Socket Exists - kdump.socket
+  command: systemctl list-unit-files kdump.socket
+  register: socket_file_exists
+  changed_when: false
+  ignore_errors: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_kdump_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80258-7
+  - NIST-800-53-AC-17(8)
+  - NIST-800-53-CM-7
+  - NIST-800-53-CM-6(b)
+  - DISA-STIG-RHEL-07-021300
+
+- name: Disable socket kdump
+  systemd:
+    name: kdump.socket
+    enabled: 'no'
+    state: stopped
+    masked: 'yes'
+  when:
+  - '"kdump.socket" in socket_file_exists.stdout_lines[1]'
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_kdump_disabled
+  - medium_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80258-7
+  - NIST-800-53-AC-17(8)
+  - NIST-800-53-CM-7
+  - NIST-800-53-CM-6(b)
+  - DISA-STIG-RHEL-07-021300
+
+- name: Disable Kerberos Authentication
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*KerberosAuthentication\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: KerberosAuthentication no
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - sshd_disable_kerb_auth | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_disable_kerb_auth
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80221-5
+  - NIST-800-53-CM-6(c)
+  - NIST-800-171-3.1.12
+  - DISA-STIG-RHEL-07-040440
+
+- name: Disable SSH Root Login
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*PermitRootLogin\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: PermitRootLogin no
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - sshd_disable_root_login | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_disable_root_login
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27445-6
+  - NIST-800-53-AC-3
+  - NIST-800-53-AC-6(2)
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-IA-2
+  - NIST-800-53-IA-2(5)
+  - NIST-800-171-3.1.1
+  - NIST-800-171-3.1.5
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-040370
+
+- name: Disable Host-Based Authentication
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*HostbasedAuthentication\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: HostbasedAuthentication no
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - disable_host_auth | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - disable_host_auth
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27413-4
+  - NIST-800-53-AC-3
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-CM-6(b)
+  - NIST-800-171-3.1.12
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-010470
+
+- name: Set SSH Idle Timeout Interval
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*ClientAliveInterval\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: ClientAliveInterval {{ sshd_idle_timeout_value }}
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sshd_set_idle_timeout | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_set_idle_timeout
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27433-2
+  - NIST-800-53-AC-2(5)
+  - NIST-800-53-SA-8(i)
+  - NIST-800-53-AC-12
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-SC-10
+  - NIST-800-171-3.1.11
+  - PCI-DSS-Req-8.1.8
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-040320
+
+- name: Enable Use of Strict Mode Checking
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*StrictModes\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: StrictModes yes
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - sshd_enable_strictmodes | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_enable_strictmodes
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80222-3
+  - NIST-800-53-AC-6
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-171-3.1.12
+  - DISA-STIG-RHEL-07-040450
+
+- name: Disable GSSAPI Authentication
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*GSSAPIAuthentication\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: GSSAPIAuthentication no
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - sshd_disable_gssapi_auth | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_disable_gssapi_auth
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80220-7
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-CM-6(c)
+  - NIST-800-171-3.1.12
+  - DISA-STIG-RHEL-07-040430
+
+- name: Use Only FIPS 140-2 Validated MACs
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*MACs\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: MACs {{ sshd_approved_macs }}
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - sshd_use_approved_macs | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_use_approved_macs
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27455-5
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-AC-17(2)
+  - NIST-800-53-IA-7
+  - NIST-800-53-SC-13
+  - NIST-800-53-MA-4(6)
+  - NIST-800-171-3.1.13
+  - NIST-800-171-3.13.11
+  - NIST-800-171-3.13.8
+  - DISA-STIG-RHEL-07-040400
+
+- name: Use Only FIPS 140-2 Validated Ciphers
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*Ciphers\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - sshd_use_approved_ciphers | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_use_approved_ciphers
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27295-5
+  - NIST-800-53-AC-3
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-AC-17(2)
+  - NIST-800-53-AU-10(5)
+  - NIST-800-53-CM-6(b)
+  - NIST-800-53-IA-5(1)(c)
+  - NIST-800-53-IA-7
+  - NIST-800-53-SI-7
+  - NIST-800-53-SC-13
+  - NIST-800-171-3.1.13
+  - NIST-800-171-3.13.11
+  - NIST-800-171-3.13.8
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-040110
+
+- name: Disable SSH Access via Empty Passwords
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*PermitEmptyPasswords\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: PermitEmptyPasswords no
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - sshd_disable_empty_passwords | bool
+  - high_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_disable_empty_passwords
+  - high_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27471-2
+  - NIST-800-53-AC-3
+  - NIST-800-53-AC-6
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-CM-6(b)
+  - NIST-800-171-3.1.1
+  - NIST-800-171-3.1.5
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-010300
+
+- name: Set SSH Client Alive Max Count
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*ClientAliveCountMax\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: ClientAliveCountMax {{ var_sshd_set_keepalive }}
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - sshd_set_keepalive | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_set_keepalive
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27082-7
+  - NIST-800-53-AC-2(5)
+  - NIST-800-53-SA-8
+  - NIST-800-53-AC-12
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-53-SC-10
+  - NIST-800-171-3.1.11
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-040340
+
+- name: Enable SSH Warning Banner
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*Banner\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: Banner /etc/issue
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sshd_enable_warning_banner | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_enable_warning_banner
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-27314-4
+  - NIST-800-53-AC-8(a)
+  - NIST-800-53-AC-8(b)
+  - NIST-800-53-AC-8(c)(1)
+  - NIST-800-53-AC-8(c)(2)
+  - NIST-800-53-AC-8(c)(3)
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-171-3.1.9
+  - CJIS-5.5.6
+  - DISA-STIG-RHEL-07-040170
+
+- name: Disable SSH Support for Rhosts RSA Authentication
+  block:
+  - name: Deduplicate values from /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: false
+      regexp: (?i)^\s*RhostsRSAAuthentication\s+
+      state: absent
+  - name: Insert correct line to /etc/ssh/sshd_config
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      create: true
+      line: RhostsRSAAuthentication no
+      state: present
+      insertbefore: ^[#\s]*Match
+      validate: /usr/sbin/sshd -t -f %s
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - sshd_disable_rhosts_rsa | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - medium_severity | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - sshd_disable_rhosts_rsa
+  - medium_severity
+  - restrict_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80373-4
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-AC-17(a)
+  - NIST-800-53-AC-17(b)
+  - NIST-800-171-3.1.12
+  - DISA-STIG-RHEL-07-040330
+
+- name: Unit Service Exists - rpcbind.service
+  command: systemctl list-unit-files rpcbind.service
+  register: service_file_exists
+  changed_when: false
+  ignore_errors: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_rpcbind_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_rpcbind_disabled
+  - unknown_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80230-6
+
+- name: Disable service rpcbind
+  systemd:
+    name: rpcbind.service
+    enabled: 'no'
+    state: stopped
+    masked: 'yes'
+  when:
+  - '"rpcbind.service" in service_file_exists.stdout_lines[1]'
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_rpcbind_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_rpcbind_disabled
+  - unknown_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80230-6
+
+- name: Unit Socket Exists - rpcbind.socket
+  command: systemctl list-unit-files rpcbind.socket
+  register: socket_file_exists
+  changed_when: false
+  ignore_errors: true
+  when:
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_rpcbind_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_rpcbind_disabled
+  - unknown_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80230-6
+
+- name: Disable socket rpcbind
+  systemd:
+    name: rpcbind.socket
+    enabled: 'no'
+    state: stopped
+    masked: 'yes'
+  when:
+  - '"rpcbind.socket" in socket_file_exists.stdout_lines[1]'
+  - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
+  - unknown_severity | bool
+  - disable_strategy | bool
+  - no_reboot_needed | bool
+  - service_rpcbind_disabled | bool
+  - low_disruption | bool
+  - low_complexity | bool
+  tags:
+  - service_rpcbind_disabled
+  - unknown_severity
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - no_reboot_needed
+  - CCE-80230-6
