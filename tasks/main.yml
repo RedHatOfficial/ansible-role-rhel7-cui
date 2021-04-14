@@ -1309,8 +1309,8 @@
 - name: add audit_backlog_limit argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 audit_backlog_limit=8192"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 audit_backlog_limit=8192'
   when:
   - argcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -1413,8 +1413,8 @@
 - name: add audit argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 audit=1"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 audit=1'
   when:
   - argcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -1812,8 +1812,8 @@
 - name: add fips argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 fips=1"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 fips=1'
   when:
   - fipsargcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -1941,8 +1941,8 @@
 - name: add boot argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 boot=UUID={{ bootuuid.stdout }}"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 boot=UUID={{ bootuuid.stdout }}'
   when:
   - bootargcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -3293,8 +3293,8 @@
 - name: add vsyscall argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 vsyscall=none"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 vsyscall=none'
   when:
   - argcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -3481,8 +3481,8 @@
 - name: add page_poison argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 page_poison=1"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 page_poison=1'
   when:
   - argcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
@@ -3571,8 +3571,8 @@
 - name: add slub_debug argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 slub_debug=P"
+    regexp: '(GRUB_CMDLINE_LINUX=.*)'
+    replace: '\1 slub_debug=P'
   when:
   - argcheck.rc != 0
   - ansible_virtualization_role != "guest" or ansible_virtualization_type != "docker"
