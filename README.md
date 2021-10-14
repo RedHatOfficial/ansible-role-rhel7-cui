@@ -22,7 +22,7 @@ Information (CUI).
 The tasks that are used in this role are generated using OpenSCAP.
 See the OpenSCAP project for more details on Ansible playbook generation at [https://github.com/OpenSCAP/openscap](https://github.com/OpenSCAP/openscap)
 
-To submit a fix or enhancement for an Ansible task that is failing or missing in this role,
+To submit a fix or enhancement for an Ansible task that is failing or missing,
 see the ComplianceAsCode project at [https://github.com/ComplianceAsCode/content](https://github.com/ComplianceAsCode/content)
 
 Requirements
