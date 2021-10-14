@@ -2224,6 +2224,7 @@
 - name: Disable Ctrl-Alt-Del Reboot Activation
   systemd:
     name: ctrl-alt-del.target
+    force: true
     masked: true
     state: stopped
   when:
@@ -2324,7 +2325,7 @@
     create: true
     dest: /usr/lib/systemd/system/rescue.service
     regexp: ^#?ExecStart=
-    line: ExecStart=-/bin/sh -c "/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"
+    line: ExecStart=-/bin/sh -c "/usr/sbin/sulogin; /usr/bin/systemctl --fail --no-block default"
   when:
   - low_complexity | bool
   - low_disruption | bool
@@ -2362,7 +2363,6 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-27351-6
-  - DISA-STIG-RHEL-07-010090
   - NIST-800-171-3.1.10
   - NIST-800-53-CM-6(a)
   - enable_strategy
@@ -2685,6 +2685,40 @@
   - restrict_strategy | bool
   - unknown_severity | bool
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-27407-6
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-07-030000
+  - NIST-800-171-3.3.1
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AC-6(9)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-AU-2(d)
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
+  - PCI-DSS-Req-10.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_auditd_enabled
+  when:
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_auditd_enabled | bool
+
 - name: Enable service auditd
   block:
   - name: Gather the package facts
@@ -2706,6 +2740,7 @@
   - no_reboot_needed | bool
   - service_auditd_enabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-27407-6
   - CJIS-5.4.1.1
@@ -2721,6 +2756,7 @@
   - NIST-800-53-AU-2(d)
   - NIST-800-53-AU-3
   - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
   - PCI-DSS-Req-10.1
   - enable_strategy
   - low_complexity
@@ -2992,6 +3028,28 @@
   - reboot_required
   - restrict_strategy
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-27331-8
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AU-11
+  - NIST-800-53-CM-6(a)
+  - auditd_data_retention_flush
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_data_retention_flush | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
 - name: Configure auditd Flush Priority
   lineinfile:
     dest: /etc/audit/auditd.conf
@@ -3006,7 +3064,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-27331-8
   - NIST-800-171-3.3.1
