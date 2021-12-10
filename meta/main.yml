@@ -1,6 +1,6 @@
 galaxy_info:
   role_name: rhel7_cui
-  namespace: redhatofficial
+  namespace: RedHatOfficial
   author: ComplianceAsCode development team
   description: Unclassified Information in Non-federal Information Systems and Organizations (NIST 800-171)
 
