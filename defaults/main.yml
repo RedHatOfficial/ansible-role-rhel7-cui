@@ -35,6 +35,8 @@ sysctl_net_ipv4_conf_default_secure_redirects_value: '0'
 sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value: '1'
 sysctl_net_ipv4_icmp_ignore_bogus_error_responses_value: '1'
 sysctl_net_ipv4_tcp_syncookies_value: '1'
+sysctl_kernel_kptr_restrict_value: '1'
+var_slub_debug_options: P
 var_selinux_policy_name: targeted
 var_selinux_state: enforcing
 sshd_idle_timeout_value: '600'
