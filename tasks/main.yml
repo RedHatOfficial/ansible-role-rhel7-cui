@@ -29,6 +29,36 @@
   - no_reboot_needed
   - package_dracut-fips_installed
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80359-3
+  - CJIS-5.10.1.2
+  - DISA-STIG-RHEL-07-021350
+  - NIST-800-171-3.13.11
+  - NIST-800-171-3.13.8
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IA-7
+  - NIST-800-53-SC-12
+  - NIST-800-53-SC-12(2)
+  - NIST-800-53-SC-12(3)
+  - NIST-800-53-SC-13
+  - grub2_enable_fips_mode
+  - high_complexity
+  - high_severity
+  - medium_disruption
+  - reboot_required
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_07_021350 | bool
+  - grub2_enable_fips_mode | bool
+  - high_complexity | bool
+  - high_severity | bool
+  - medium_disruption | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+
 - name: check prelink binary installed
   stat:
     path: /usr/sbin/prelink
@@ -42,6 +72,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -75,6 +106,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - prelink_exists.stat.exists
   tags:
   - CCE-80359-3
@@ -106,6 +138,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - prelink_exists.stat.exists
   tags:
   - CCE-80359-3
@@ -140,6 +173,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -172,6 +206,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - aesni_supported.rc == 0
   - ansible_distribution == 'RedHat'
   tags:
@@ -206,6 +241,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -236,6 +272,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -269,6 +306,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -302,6 +340,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - fipsargcheck.rc == 0
   tags:
   - CCE-80359-3
@@ -336,6 +375,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - fipsargcheck.rc != 0
   tags:
   - CCE-80359-3
@@ -369,6 +409,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -402,6 +443,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -435,6 +477,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - bootargcheck.rc == 0
   tags:
   - CCE-80359-3
@@ -469,6 +512,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   - bootargcheck.rc != 0
   tags:
   - CCE-80359-3
@@ -500,6 +544,7 @@
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-80359-3
   - CJIS-5.10.1.2
@@ -1074,7 +1119,7 @@
     - name: Limit Password Reuse - Ensure the required PAM module line is included in {{ pam_file_path }}
       ansible.builtin.lineinfile:
         dest: '{{ pam_file_path }}'
-        insertafter: ^password.*requisite.*pam_pwquality.so
+        insertafter: ^password.*requisite.*pam_pwquality\.so
         line: password    requisite    pam_pwhistory.so
       register: result_pam_module_add
       when:
@@ -1082,9 +1127,10 @@
     - name: Limit Password Reuse - Ensure authselect changes are applied
       ansible.builtin.command:
         cmd: authselect apply-changes -b
-      when:
-      - result_authselect_present.stat.exists
-      - (result_pam_module_add is defined and result_pam_module_add.changed) or (result_pam_module_edit is defined and result_pam_module_edit.changed)
+      when: 'result_authselect_present is defined and result_authselect_present.stat.exists and ((result_pam_module_add is
+        defined and result_pam_module_add.changed) or (result_pam_module_edit is defined and result_pam_module_edit.changed))
+
+        '
     when:
     - result_pam_line_present.found is defined
     - result_pam_line_present.found == 0
@@ -1311,7 +1357,7 @@
     - name: Limit Password Reuse - Ensure the required PAM module line is included in {{ pam_file_path }}
       ansible.builtin.lineinfile:
         dest: '{{ pam_file_path }}'
-        insertafter: ^password.*requisite.*pam_pwquality.so
+        insertafter: ^password.*requisite.*pam_pwquality\.so
         line: password    requisite    pam_pwhistory.so
       register: result_pam_module_add
       when:
@@ -1319,9 +1365,10 @@
     - name: Limit Password Reuse - Ensure authselect changes are applied
       ansible.builtin.command:
         cmd: authselect apply-changes -b
-      when:
-      - result_authselect_present.stat.exists
-      - (result_pam_module_add is defined and result_pam_module_add.changed) or (result_pam_module_edit is defined and result_pam_module_edit.changed)
+      when: 'result_authselect_present is defined and result_authselect_present.stat.exists and ((result_pam_module_add is
+        defined and result_pam_module_add.changed) or (result_pam_module_edit is defined and result_pam_module_edit.changed))
+
+        '
     when:
     - result_pam_line_present.found is defined
     - result_pam_line_present.found == 0
@@ -1507,7 +1554,7 @@
   - name: Lock Accounts After Failed Password Attempts - Check if pam_faillock.so is already enabled
     ansible.builtin.lineinfile:
       path: /etc/pam.d/system-auth
-      regexp: .*auth.*pam_faillock.so (preauth|authfail)
+      regexp: .*auth.*pam_faillock\.so (preauth|authfail)
       state: absent
     check_mode: true
     changed_when: false
@@ -1516,7 +1563,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: auth        required      pam_faillock.so preauth
-      insertbefore: ^auth.*sufficient.*pam_unix.so.*
+      insertbefore: ^auth.*sufficient.*pam_unix\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -1527,7 +1574,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: auth        required      pam_faillock.so authfail
-      insertbefore: ^auth.*required.*pam_deny.so.*
+      insertbefore: ^auth.*required.*pam_deny\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -1538,7 +1585,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: account     required      pam_faillock.so
-      insertbefore: ^account.*required.*pam_unix.so.*
+      insertbefore: ^account.*required.*pam_unix\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -1926,7 +1973,7 @@
       files
     ansible.builtin.lineinfile:
       path: /etc/pam.d/system-auth
-      regexp: .*auth.*pam_faillock.so (preauth|authfail).*deny
+      regexp: .*auth.*pam_faillock\.so (preauth|authfail).*deny
       state: absent
     check_mode: true
     changed_when: false
@@ -2125,7 +2172,7 @@
   - name: Set Interval For Counting Failed Password Attempts - Check if pam_faillock.so is already enabled
     ansible.builtin.lineinfile:
       path: /etc/pam.d/system-auth
-      regexp: .*auth.*pam_faillock.so (preauth|authfail)
+      regexp: .*auth.*pam_faillock\.so (preauth|authfail)
       state: absent
     check_mode: true
     changed_when: false
@@ -2134,7 +2181,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: auth        required      pam_faillock.so preauth
-      insertbefore: ^auth.*sufficient.*pam_unix.so.*
+      insertbefore: ^auth.*sufficient.*pam_unix\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -2145,7 +2192,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: auth        required      pam_faillock.so authfail
-      insertbefore: ^auth.*required.*pam_deny.so.*
+      insertbefore: ^auth.*required.*pam_deny\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -2156,7 +2203,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: account     required      pam_faillock.so
-      insertbefore: ^account.*required.*pam_unix.so.*
+      insertbefore: ^account.*required.*pam_unix\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -2539,7 +2586,7 @@
       enabled in pam files
     ansible.builtin.lineinfile:
       path: /etc/pam.d/system-auth
-      regexp: .*auth.*pam_faillock.so (preauth|authfail).*fail_interval
+      regexp: .*auth.*pam_faillock\.so (preauth|authfail).*fail_interval
       state: absent
     check_mode: true
     changed_when: false
@@ -2742,7 +2789,7 @@
   - name: Set Lockout Time for Failed Password Attempts - Check if pam_faillock.so is already enabled
     ansible.builtin.lineinfile:
       path: /etc/pam.d/system-auth
-      regexp: .*auth.*pam_faillock.so (preauth|authfail)
+      regexp: .*auth.*pam_faillock\.so (preauth|authfail)
       state: absent
     check_mode: true
     changed_when: false
@@ -2751,7 +2798,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: auth        required      pam_faillock.so preauth
-      insertbefore: ^auth.*sufficient.*pam_unix.so.*
+      insertbefore: ^auth.*sufficient.*pam_unix\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -2762,7 +2809,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: auth        required      pam_faillock.so authfail
-      insertbefore: ^auth.*required.*pam_deny.so.*
+      insertbefore: ^auth.*required.*pam_deny\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -2773,7 +2820,7 @@
     ansible.builtin.lineinfile:
       path: '{{ item }}'
       line: account     required      pam_faillock.so
-      insertbefore: ^account.*required.*pam_unix.so.*
+      insertbefore: ^account.*required.*pam_unix\.so.*
       state: present
     loop:
     - /etc/pam.d/system-auth
@@ -3163,7 +3210,7 @@
       in pam files
     ansible.builtin.lineinfile:
       path: /etc/pam.d/system-auth
-      regexp: .*auth.*pam_faillock.so (preauth|authfail).*unlock_time
+      regexp: .*auth.*pam_faillock\.so (preauth|authfail).*unlock_time
       state: absent
     check_mode: true
     changed_when: false
@@ -4389,7 +4436,7 @@
 - name: Check if umask is already set
   ansible.builtin.lineinfile:
     path: /etc/profile
-    regexp: (^[\s]*[^#]umask)\s+(\d+)
+    regexp: (^[\s]*umask)\s+(\d+)
     state: absent
   check_mode: true
   changed_when: false
@@ -4841,6 +4888,7 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
   - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-27331-8
   - NIST-800-171-3.3.1
@@ -8341,7 +8389,8 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   tags:
   - CCE-80149-8
   - NIST-800-53-AC-6
@@ -8370,7 +8419,8 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8407,7 +8457,8 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -8435,7 +8486,8 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - mount_info is defined and "nodev" not in mount_info.options
   tags:
   - CCE-80149-8
@@ -8466,7 +8518,8 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-80149-8
@@ -8495,7 +8548,8 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   tags:
   - CCE-80150-6
   - NIST-800-53-AC-6
@@ -8524,7 +8578,8 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8561,7 +8616,8 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -8589,7 +8645,8 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - mount_info is defined and "noexec" not in mount_info.options
   tags:
   - CCE-80150-6
@@ -8620,7 +8677,8 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-80150-6
@@ -8649,7 +8707,8 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   tags:
   - CCE-80151-4
   - NIST-800-53-AC-6
@@ -8678,7 +8737,8 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8715,7 +8775,8 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -8743,7 +8804,8 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - mount_info is defined and "nosuid" not in mount_info.options
   tags:
   - CCE-80151-4
@@ -8774,7 +8836,8 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/tmp" in ansible_mounts |
+    map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-80151-4
@@ -8803,7 +8866,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   tags:
   - CCE-81052-3
   - configure_strategy
@@ -8826,7 +8890,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8857,7 +8922,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -8879,7 +8945,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - mount_info is defined and "nodev" not in mount_info.options
   tags:
   - CCE-81052-3
@@ -8904,7 +8971,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-81052-3
@@ -8927,7 +8995,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   tags:
   - CCE-82150-4
   - configure_strategy
@@ -8950,7 +9019,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8981,7 +9051,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -9003,7 +9074,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - mount_info is defined and "noexec" not in mount_info.options
   tags:
   - CCE-82150-4
@@ -9028,7 +9100,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-82150-4
@@ -9051,7 +9124,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   tags:
   - CCE-82153-8
   - configure_strategy
@@ -9074,7 +9148,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -9105,7 +9180,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -9127,7 +9203,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - mount_info is defined and "nosuid" not in mount_info.options
   tags:
   - CCE-82153-8
@@ -9152,7 +9229,8 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/var/tmp" in ansible_mounts
+    | map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-82153-8
