@@ -813,8 +813,6 @@
 
 - name: Read signatures in GPG key
   command: gpg --with-fingerprint --with-colons "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-  args:
-    warn: false
   changed_when: false
   register: gpg_fingerprints
   check_mode: false
@@ -3764,8 +3762,6 @@
 
 - name: Unit Socket Exists - debug-shell.socket
   command: systemctl list-unit-files debug-shell.socket
-  args:
-    warn: false
   register: socket_file_exists
   changed_when: false
   ignore_errors: true
@@ -4211,6 +4207,7 @@
   - NIST-800-171-3.1.5
   - NIST-800-53-AC-6
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
   - low_complexity
   - low_disruption
   - medium_severity
@@ -4337,16 +4334,19 @@
   - no_reboot_needed
   - restrict_strategy
 
-- name: Replace user umask in /etc/bashrc
-  replace:
+- name: Check if umask in /etc/bashrc is already set
+  ansible.builtin.lineinfile:
     path: /etc/bashrc
-    regexp: umask.*
-    replace: umask {{ var_accounts_user_umask }}
+    regexp: ^(\s*)umask\s+.*
+    state: absent
+  check_mode: true
+  changed_when: false
   register: umask_replace
   tags:
   - CCE-80202-5
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
   - accounts_umask_etc_bashrc
   - low_complexity
   - low_disruption
@@ -4361,8 +4361,33 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
 
-- name: Append user umask in /etc/bashrc
-  lineinfile:
+- name: Replace user umask in /etc/bashrc
+  ansible.builtin.replace:
+    path: /etc/bashrc
+    regexp: ^(\s*)umask(\s+).*
+    replace: \g<1>umask\g<2>{{ var_accounts_user_umask }}
+  when:
+  - accounts_umask_etc_bashrc | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - umask_replace.found > 0
+  tags:
+  - CCE-80202-5
+  - NIST-800-53-AC-6(1)
+  - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
+  - accounts_umask_etc_bashrc
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Ensure the Default umask is Appended Correctly
+  ansible.builtin.lineinfile:
     create: true
     path: /etc/bashrc
     line: umask {{ var_accounts_user_umask }}
@@ -4373,11 +4398,12 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - umask_replace is not changed
+  - umask_replace.found == 0
   tags:
   - CCE-80202-5
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
   - accounts_umask_etc_bashrc
   - low_complexity
   - low_disruption
@@ -4385,11 +4411,13 @@
   - no_reboot_needed
   - restrict_strategy
 
-- name: Replace user umask in /etc/csh.cshrc
-  replace:
+- name: Check if umask in /etc/csh.cshrc is already set
+  ansible.builtin.lineinfile:
     path: /etc/csh.cshrc
-    regexp: umask.*
-    replace: umask {{ var_accounts_user_umask }}
+    regexp: ^(\s*)umask\s+.*
+    state: absent
+  check_mode: true
+  changed_when: false
   register: umask_replace
   tags:
   - CCE-80203-3
@@ -4409,8 +4437,32 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
 
-- name: Append user umask in /etc/csh.cshrc
-  lineinfile:
+- name: Replace user umask in /etc/csh.cshrc
+  ansible.builtin.replace:
+    path: /etc/csh.cshrc
+    regexp: ^(\s*)umask(\s+).*
+    replace: \g<1>umask\g<2>{{ var_accounts_user_umask }}
+  when:
+  - accounts_umask_etc_csh_cshrc | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - umask_replace.found > 0
+  tags:
+  - CCE-80203-3
+  - NIST-800-53-AC-6(1)
+  - NIST-800-53-CM-6(a)
+  - accounts_umask_etc_csh_cshrc
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Ensure the Default umask is Appended Correctly
+  ansible.builtin.lineinfile:
     create: true
     path: /etc/csh.cshrc
     line: umask {{ var_accounts_user_umask }}
@@ -4421,7 +4473,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - umask_replace is not changed
+  - umask_replace.found == 0
   tags:
   - CCE-80203-3
   - NIST-800-53-AC-6(1)
@@ -4445,6 +4497,7 @@
   - CCE-80204-1
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
   - accounts_umask_etc_profile
   - low_complexity
   - low_disruption
@@ -4468,6 +4521,7 @@
   - CCE-80204-1
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
   - accounts_umask_etc_profile
   - low_complexity
   - low_disruption
@@ -4499,6 +4553,7 @@
   - CCE-80204-1
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-8.6.1
   - accounts_umask_etc_profile
   - low_complexity
   - low_disruption
@@ -4603,15 +4658,15 @@
   - PCI-DSS-Req-10.3
   - grub2_audit_argument
   - low_disruption
+  - low_severity
   - medium_complexity
-  - medium_severity
   - reboot_required
   - restrict_strategy
   when:
   - grub2_audit_argument | bool
   - low_disruption | bool
+  - low_severity | bool
   - medium_complexity | bool
-  - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
 
@@ -4622,8 +4677,8 @@
   when:
   - grub2_audit_argument | bool
   - low_disruption | bool
+  - low_severity | bool
   - medium_complexity | bool
-  - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
@@ -4640,8 +4695,8 @@
   - PCI-DSS-Req-10.3
   - grub2_audit_argument
   - low_disruption
+  - low_severity
   - medium_complexity
-  - medium_severity
   - reboot_required
   - restrict_strategy
 
@@ -4653,8 +4708,8 @@
   when:
   - grub2_audit_argument | bool
   - low_disruption | bool
+  - low_severity | bool
   - medium_complexity | bool
-  - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
@@ -4672,8 +4727,8 @@
   - PCI-DSS-Req-10.3
   - grub2_audit_argument
   - low_disruption
+  - low_severity
   - medium_complexity
-  - medium_severity
   - reboot_required
   - restrict_strategy
 
@@ -4685,8 +4740,8 @@
   when:
   - grub2_audit_argument | bool
   - low_disruption | bool
+  - low_severity | bool
   - medium_complexity | bool
-  - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
@@ -4704,8 +4759,8 @@
   - PCI-DSS-Req-10.3
   - grub2_audit_argument
   - low_disruption
+  - low_severity
   - medium_complexity
-  - medium_severity
   - reboot_required
   - restrict_strategy
 
@@ -4714,8 +4769,8 @@
   when:
   - grub2_audit_argument | bool
   - low_disruption | bool
+  - low_severity | bool
   - medium_complexity | bool
-  - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
@@ -4732,8 +4787,8 @@
   - PCI-DSS-Req-10.3
   - grub2_audit_argument
   - low_disruption
+  - low_severity
   - medium_complexity
-  - medium_severity
   - reboot_required
   - restrict_strategy
 
@@ -5059,6 +5114,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.all.accept_ra.*$
     patterns: '*.conf'
     file_type: any
@@ -5084,7 +5140,7 @@
   - reboot_required
   - sysctl_net_ipv6_conf_all_accept_ra
 
-- name: Comment out any occurrences of net.ipv6.conf.all.accept_ra from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv6.conf.all.accept_ra from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.all.accept_ra
@@ -5143,6 +5199,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.all.accept_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -5170,7 +5227,7 @@
   - reboot_required
   - sysctl_net_ipv6_conf_all_accept_redirects
 
-- name: Comment out any occurrences of net.ipv6.conf.all.accept_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv6.conf.all.accept_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.all.accept_redirects
@@ -5233,6 +5290,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.all.accept_source_route.*$
     patterns: '*.conf'
     file_type: any
@@ -5260,7 +5318,7 @@
   - reboot_required
   - sysctl_net_ipv6_conf_all_accept_source_route
 
-- name: Comment out any occurrences of net.ipv6.conf.all.accept_source_route from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv6.conf.all.accept_source_route from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.all.accept_source_route
@@ -5323,6 +5381,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.default.accept_ra.*$
     patterns: '*.conf'
     file_type: any
@@ -5348,7 +5407,7 @@
   - reboot_required
   - sysctl_net_ipv6_conf_default_accept_ra
 
-- name: Comment out any occurrences of net.ipv6.conf.default.accept_ra from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv6.conf.default.accept_ra from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.default.accept_ra
@@ -5407,6 +5466,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.default.accept_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -5432,7 +5492,7 @@
   - reboot_required
   - sysctl_net_ipv6_conf_default_accept_redirects
 
-- name: Comment out any occurrences of net.ipv6.conf.default.accept_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv6.conf.default.accept_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.default.accept_redirects
@@ -5491,6 +5551,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.default.accept_source_route.*$
     patterns: '*.conf'
     file_type: any
@@ -5511,6 +5572,7 @@
   - NIST-800-53-CM-6.1(iv)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5518,7 +5580,7 @@
   - reboot_required
   - sysctl_net_ipv6_conf_default_accept_source_route
 
-- name: Comment out any occurrences of net.ipv6.conf.default.accept_source_route from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv6.conf.default.accept_source_route from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.default.accept_source_route
@@ -5540,6 +5602,7 @@
   - NIST-800-53-CM-6.1(iv)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5569,6 +5632,7 @@
   - NIST-800-53-CM-6.1(iv)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5581,6 +5645,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.accept_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -5610,7 +5675,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_all_accept_redirects
 
-- name: Comment out any occurrences of net.ipv4.conf.all.accept_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.all.accept_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.accept_redirects
@@ -5677,6 +5742,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.accept_source_route.*$
     patterns: '*.conf'
     file_type: any
@@ -5706,7 +5772,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_all_accept_source_route
 
-- name: Comment out any occurrences of net.ipv4.conf.all.accept_source_route from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.all.accept_source_route from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.accept_source_route
@@ -5773,6 +5839,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.log_martians.*$
     patterns: '*.conf'
     file_type: any
@@ -5798,7 +5865,7 @@
   - sysctl_net_ipv4_conf_all_log_martians
   - unknown_severity
 
-- name: Comment out any occurrences of net.ipv4.conf.all.log_martians from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.all.log_martians from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.log_martians
@@ -5857,6 +5924,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.rp_filter.*$
     patterns: '*.conf'
     file_type: any
@@ -5878,6 +5946,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5885,7 +5954,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_all_rp_filter
 
-- name: Comment out any occurrences of net.ipv4.conf.all.rp_filter from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.all.rp_filter from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.rp_filter
@@ -5908,6 +5977,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5938,6 +6008,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5950,6 +6021,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.secure_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -5969,6 +6041,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -5976,7 +6049,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_all_secure_redirects
 
-- name: Comment out any occurrences of net.ipv4.conf.all.secure_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.all.secure_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.secure_redirects
@@ -5997,6 +6070,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6025,6 +6099,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6037,6 +6112,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.accept_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -6059,6 +6135,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6066,7 +6143,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_default_accept_redirects
 
-- name: Comment out any occurrences of net.ipv4.conf.default.accept_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.default.accept_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.accept_redirects
@@ -6090,6 +6167,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6121,6 +6199,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6133,6 +6212,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.accept_source_route.*$
     patterns: '*.conf'
     file_type: any
@@ -6162,7 +6242,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_default_accept_source_route
 
-- name: Comment out any occurrences of net.ipv4.conf.default.accept_source_route from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.default.accept_source_route from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.accept_source_route
@@ -6229,6 +6309,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.log_martians.*$
     patterns: '*.conf'
     file_type: any
@@ -6254,7 +6335,7 @@
   - sysctl_net_ipv4_conf_default_log_martians
   - unknown_severity
 
-- name: Comment out any occurrences of net.ipv4.conf.default.log_martians from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.default.log_martians from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.log_martians
@@ -6313,6 +6394,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.rp_filter.*$
     patterns: '*.conf'
     file_type: any
@@ -6341,7 +6423,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_default_rp_filter
 
-- name: Comment out any occurrences of net.ipv4.conf.default.rp_filter from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.default.rp_filter from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.rp_filter
@@ -6406,6 +6488,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.secure_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -6432,7 +6515,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_default_secure_redirects
 
-- name: Comment out any occurrences of net.ipv4.conf.default.secure_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.default.secure_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.secure_redirects
@@ -6493,6 +6576,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.icmp_echo_ignore_broadcasts.*$
     patterns: '*.conf'
     file_type: any
@@ -6514,6 +6598,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6521,7 +6606,7 @@
   - reboot_required
   - sysctl_net_ipv4_icmp_echo_ignore_broadcasts
 
-- name: Comment out any occurrences of net.ipv4.icmp_echo_ignore_broadcasts from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.icmp_echo_ignore_broadcasts from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.icmp_echo_ignore_broadcasts
@@ -6544,6 +6629,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6574,6 +6660,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6586,6 +6673,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.icmp_ignore_bogus_error_responses.*$
     patterns: '*.conf'
     file_type: any
@@ -6604,6 +6692,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6611,7 +6700,7 @@
   - sysctl_net_ipv4_icmp_ignore_bogus_error_responses
   - unknown_severity
 
-- name: Comment out any occurrences of net.ipv4.icmp_ignore_bogus_error_responses from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.icmp_ignore_bogus_error_responses from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.icmp_ignore_bogus_error_responses
@@ -6631,6 +6720,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6658,6 +6748,7 @@
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
+  - PCI-DSS-Req-1.4.3
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6670,6 +6761,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.tcp_syncookies.*$
     patterns: '*.conf'
     file_type: any
@@ -6692,6 +6784,7 @@
   - NIST-800-53-SC-5(1)
   - NIST-800-53-SC-5(2)
   - NIST-800-53-SC-5(3)(a)
+  - PCI-DSS-Req-1.4.1
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6699,7 +6792,7 @@
   - reboot_required
   - sysctl_net_ipv4_tcp_syncookies
 
-- name: Comment out any occurrences of net.ipv4.tcp_syncookies from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.tcp_syncookies from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.tcp_syncookies
@@ -6723,6 +6816,7 @@
   - NIST-800-53-SC-5(1)
   - NIST-800-53-SC-5(2)
   - NIST-800-53-SC-5(3)(a)
+  - PCI-DSS-Req-1.4.1
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6754,6 +6848,7 @@
   - NIST-800-53-SC-5(1)
   - NIST-800-53-SC-5(2)
   - NIST-800-53-SC-5(3)(a)
+  - PCI-DSS-Req-1.4.1
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6766,6 +6861,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.send_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -6796,7 +6892,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_all_send_redirects
 
-- name: Comment out any occurrences of net.ipv4.conf.all.send_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.all.send_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.send_redirects
@@ -6865,6 +6961,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.send_redirects.*$
     patterns: '*.conf'
     file_type: any
@@ -6895,7 +6992,7 @@
   - reboot_required
   - sysctl_net_ipv4_conf_default_send_redirects
 
-- name: Comment out any occurrences of net.ipv4.conf.default.send_redirects from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.conf.default.send_redirects from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.send_redirects
@@ -6964,6 +7061,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*net.ipv4.ip_forward.*$
     patterns: '*.conf'
     file_type: any
@@ -6986,6 +7084,8 @@
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.3.1
+  - PCI-DSS-Req-1.3.2
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -6993,7 +7093,7 @@
   - reboot_required
   - sysctl_net_ipv4_ip_forward
 
-- name: Comment out any occurrences of net.ipv4.ip_forward from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of net.ipv4.ip_forward from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.ip_forward
@@ -7017,6 +7117,8 @@
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.3.1
+  - PCI-DSS-Req-1.3.2
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -7048,6 +7150,8 @@
   - NIST-800-53-CM-7(b)
   - NIST-800-53-SC-5
   - NIST-800-53-SC-7(a)
+  - PCI-DSS-Req-1.3.1
+  - PCI-DSS-Req-1.3.2
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -7078,6 +7182,7 @@
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.2
   - disable_strategy
   - kernel_module_dccp_disabled
   - low_complexity
@@ -7108,6 +7213,7 @@
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.2
   - disable_strategy
   - kernel_module_dccp_disabled
   - low_complexity
@@ -7136,6 +7242,7 @@
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.2
   - disable_strategy
   - kernel_module_sctp_disabled
   - low_complexity
@@ -7164,6 +7271,7 @@
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-1.4.2
   - disable_strategy
   - kernel_module_sctp_disabled
   - low_complexity
@@ -7238,6 +7346,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*fs.protected_hardlinks.*$
     patterns: '*.conf'
     file_type: any
@@ -7261,7 +7370,7 @@
   - reboot_required
   - sysctl_fs_protected_hardlinks
 
-- name: Comment out any occurrences of fs.protected_hardlinks from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of fs.protected_hardlinks from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*fs.protected_hardlinks
@@ -7316,6 +7425,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*fs.protected_symlinks.*$
     patterns: '*.conf'
     file_type: any
@@ -7339,7 +7449,7 @@
   - reboot_required
   - sysctl_fs_protected_symlinks
 
-- name: Comment out any occurrences of fs.protected_symlinks from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of fs.protected_symlinks from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*fs.protected_symlinks
@@ -7424,8 +7534,6 @@
 
 - name: Unit Socket Exists - autofs.socket
   command: systemctl list-unit-files autofs.socket
-  args:
-    warn: false
   register: socket_file_exists
   changed_when: false
   ignore_errors: true
@@ -9246,6 +9354,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*kernel.dmesg_restrict.*$
     patterns: '*.conf'
     file_type: any
@@ -9270,7 +9379,7 @@
   - reboot_required
   - sysctl_kernel_dmesg_restrict
 
-- name: Comment out any occurrences of kernel.dmesg_restrict from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of kernel.dmesg_restrict from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*kernel.dmesg_restrict
@@ -9327,6 +9436,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*kernel.kexec_load_disabled.*$
     patterns: '*.conf'
     file_type: any
@@ -9349,7 +9459,7 @@
   - reboot_required
   - sysctl_kernel_kexec_load_disabled
 
-- name: Comment out any occurrences of kernel.kexec_load_disabled from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of kernel.kexec_load_disabled from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*kernel.kexec_load_disabled
@@ -9402,6 +9512,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*kernel.yama.ptrace_scope.*$
     patterns: '*.conf'
     file_type: any
@@ -9424,7 +9535,7 @@
   - reboot_required
   - sysctl_kernel_yama_ptrace_scope
 
-- name: Comment out any occurrences of kernel.yama.ptrace_scope from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of kernel.yama.ptrace_scope from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*kernel.yama.ptrace_scope
@@ -9523,6 +9634,7 @@
     paths:
     - /etc/sysctl.d/
     - /run/sysctl.d/
+    - /usr/local/lib/sysctl.d/
     contains: ^[\s]*kernel.kptr_restrict.*$
     patterns: '*.conf'
     file_type: any
@@ -9548,7 +9660,7 @@
   - reboot_required
   - sysctl_kernel_kptr_restrict
 
-- name: Comment out any occurrences of kernel.kptr_restrict from /etc/sysctl.d/*.conf files
+- name: Comment out any occurrences of kernel.kptr_restrict from config files
   replace:
     path: '{{ item.path }}'
     regexp: ^[\s]*kernel.kptr_restrict
@@ -9907,9 +10019,9 @@
       state: present
   when:
   - DISA_STIG_RHEL_07_020210 | bool
+  - high_severity | bool
   - low_complexity | bool
   - low_disruption | bool
-  - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
   - selinux_state | bool
@@ -9923,9 +10035,9 @@
   - NIST-800-53-AC-3(3)(a)
   - NIST-800-53-AU-9
   - NIST-800-53-SC-7(21)
+  - high_severity
   - low_complexity
   - low_disruption
-  - medium_severity
   - no_reboot_needed
   - restrict_strategy
   - selinux_state
@@ -9983,8 +10095,6 @@
 
 - name: Unit Socket Exists - kdump.socket
   command: systemctl list-unit-files kdump.socket
-  args:
-    warn: false
   register: socket_file_exists
   changed_when: false
   ignore_errors: true
@@ -10068,8 +10178,6 @@
 
 - name: Unit Socket Exists - rpcbind.socket
   command: systemctl list-unit-files rpcbind.socket
-  args:
-    warn: false
   register: socket_file_exists
   changed_when: false
   ignore_errors: true
@@ -10169,7 +10277,7 @@
   - restrict_strategy
   - sshd_set_keepalive_0
 
-- name: Set SSH Idle Timeout Interval
+- name: Set SSH Client Alive Interval
   block:
   - name: Check for duplicate values
     lineinfile:
@@ -10324,6 +10432,7 @@
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
+  - PCI-DSS-Req-2.2.6
   - high_severity
   - low_complexity
   - low_disruption
@@ -10533,6 +10642,7 @@
   - NIST-800-53-CM-7(b)
   - NIST-800-53-IA-2
   - NIST-800-53-IA-2(5)
+  - PCI-DSS-Req-2.2.6
   - low_complexity
   - low_disruption
   - medium_severity
@@ -10635,6 +10745,7 @@
   - NIST-800-53-AC-8(a)
   - NIST-800-53-AC-8(c)
   - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-2.2.6
   - low_complexity
   - low_disruption
   - medium_severity
