@@ -41,6 +41,7 @@ var_selinux_state: enforcing
 sshd_idle_timeout_value: '600'
 sshd_approved_ciphers: aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc,3des-cbc,aes192-cbc,aes256-cbc,rijndael-cbc@lysator.liu.se
 sshd_approved_macs: hmac-sha2-512,hmac-sha2-256,hmac-sha1,hmac-sha1-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com
+DISA_STIG_RHEL_07_010019: true
 DISA_STIG_RHEL_07_010090: true
 DISA_STIG_RHEL_07_010120: true
 DISA_STIG_RHEL_07_010130: true
