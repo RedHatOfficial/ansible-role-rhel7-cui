@@ -1216,7 +1216,7 @@
   - name: Limit Password Reuse - Check if expected PAM module line is present in {{ pam_file_path }}
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
-      regexp: ^\s*password\s+requisite\s+pam_pwhistory.so\s*.*
+      regexp: ^\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s*.*
       state: absent
     check_mode: true
     changed_when: false
@@ -1589,7 +1589,7 @@
   - name: Limit Password Reuse - Check if expected PAM module line is present in {{ pam_file_path }}
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
-      regexp: ^\s*password\s+requisite\s+pam_pwhistory.so\s*.*
+      regexp: ^\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s*.*
       state: absent
     check_mode: true
     changed_when: false
@@ -1633,7 +1633,7 @@
   - name: Limit Password Reuse - Check if the required PAM module option is present in {{ pam_file_path }}
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
-      regexp: ^\s*password\s+requisite\s+pam_pwhistory.so\s*.*\sremember\b
+      regexp: ^\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s*.*\sremember\b
       state: absent
     check_mode: true
     changed_when: false
@@ -1642,7 +1642,7 @@
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
       backrefs: true
-      regexp: ^(\s*password\s+requisite\s+pam_pwhistory.so.*)
+      regexp: ^(\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so.*)
       line: \1 remember={{ var_password_pam_unix_remember }}
       state: present
     register: result_pam_remember_add
@@ -1653,7 +1653,7 @@
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
       backrefs: true
-      regexp: ^(\s*password\s+requisite\s+pam_pwhistory.so\s+.*)(remember)=[0-9a-zA-Z]+\s*(.*)
+      regexp: ^(\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s+.*)(remember)=[0-9a-zA-Z]+\s*(.*)
       line: \1\2={{ var_password_pam_unix_remember }} \3
     register: result_pam_remember_edit
     when:
@@ -4647,14 +4647,9 @@
   - no_reboot_needed
   - restrict_strategy
 
-- name: Check if umask in /etc/bashrc is already set
-  ansible.builtin.lineinfile:
-    path: /etc/bashrc
-    regexp: ^(\s*)umask\s+.*
-    state: absent
-  check_mode: true
-  changed_when: false
-  register: umask_replace
+- name: Gather the package facts
+  package_facts:
+    manager: auto
   tags:
   - CCE-80202-5
   - NIST-800-53-AC-6(1)
@@ -4674,6 +4669,34 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
 
+- name: Check if umask in /etc/bashrc is already set
+  ansible.builtin.lineinfile:
+    path: /etc/bashrc
+    regexp: ^(\s*)umask\s+.*
+    state: absent
+  check_mode: true
+  changed_when: false
+  register: umask_replace
+  when:
+  - accounts_umask_etc_bashrc | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"bash" in ansible_facts.packages'
+  tags:
+  - CCE-80202-5
+  - NIST-800-53-AC-6(1)
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-8.6.1
+  - accounts_umask_etc_bashrc
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Replace user umask in /etc/bashrc
   ansible.builtin.replace:
     path: /etc/bashrc
@@ -4686,6 +4709,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
+  - '"bash" in ansible_facts.packages'
   - umask_replace.found > 0
   tags:
   - CCE-80202-5
@@ -4711,6 +4735,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
+  - '"bash" in ansible_facts.packages'
   - umask_replace.found == 0
   tags:
   - CCE-80202-5
@@ -5019,7 +5044,7 @@
   - restrict_strategy | bool
 
 - name: Check audit argument exists
-  command: grep 'GRUB_CMDLINE_LINUX.*audit=' /etc/default/grub
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*audit=' /etc/default/grub
   failed_when: false
   register: argcheck
   when:
@@ -5031,6 +5056,72 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check audit argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add watch rule for  in /etc/audit/audit.rules
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="audit=1 "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck.rc != 0 and linecheck.rc != 0
   tags:
   - CCE-27212-0
   - CJIS-5.4.1.1
@@ -5063,7 +5154,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc == 0
+  - argcheck.rc == 0 and linecheck.rc == 0
   tags:
   - CCE-27212-0
   - CJIS-5.4.1.1
@@ -5085,7 +5176,7 @@
 - name: Add audit argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
     replace: \1 audit=1"
   when:
   - grub2_audit_argument | bool
@@ -5096,7 +5187,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc != 0
+  - argcheck.rc != 0 and linecheck.rc == 0
   tags:
   - CCE-27212-0
   - CJIS-5.4.1.1
@@ -5165,7 +5256,7 @@
   - restrict_strategy | bool
 
 - name: Check audit_backlog_limit argument exists
-  command: grep 'GRUB_CMDLINE_LINUX.*audit_backlog_limit=' /etc/default/grub
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*audit_backlog_limit=' /etc/default/grub
   failed_when: false
   register: argcheck
   when:
@@ -5177,6 +5268,56 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check audit_backlog_limit argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add watch rule for  in /etc/audit/audit.rules
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="audit_backlog_limit=8192 "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck.rc != 0 and linecheck.rc != 0
   tags:
   - CCE-82156-1
   - NIST-800-53-CM-6(a)
@@ -5201,7 +5342,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc == 0
+  - argcheck.rc == 0 and linecheck.rc == 0
   tags:
   - CCE-82156-1
   - NIST-800-53-CM-6(a)
@@ -5215,7 +5356,7 @@
 - name: Add audit_backlog_limit argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
     replace: \1 audit_backlog_limit=8192"
   when:
   - grub2_audit_backlog_limit_argument | bool
@@ -5226,7 +5367,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc != 0
+  - argcheck.rc != 0 and linecheck.rc == 0
   tags:
   - CCE-82156-1
   - NIST-800-53-CM-6(a)
@@ -5329,7 +5470,7 @@
   - restrict_strategy | bool
 
 - name: Check vsyscall argument exists
-  command: grep 'GRUB_CMDLINE_LINUX.*vsyscall=' /etc/default/grub
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*vsyscall=' /etc/default/grub
   failed_when: false
   register: argcheck
   when:
@@ -5341,6 +5482,56 @@
   - restrict_strategy | bool
   - '"grub2-common" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82159-5
+  - NIST-800-53-CM-7(a)
+  - grub2_vsyscall_argument
+  - low_disruption
+  - medium_complexity
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check vsyscall argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_vsyscall_argument | bool
+  - low_disruption | bool
+  - medium_complexity | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - '"grub2-common" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82159-5
+  - NIST-800-53-CM-7(a)
+  - grub2_vsyscall_argument
+  - low_disruption
+  - medium_complexity
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add watch rule for  in /etc/audit/audit.rules
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="vsyscall=none "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_vsyscall_argument | bool
+  - low_disruption | bool
+  - medium_complexity | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - '"grub2-common" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - argcheck.rc != 0 and linecheck.rc != 0
   tags:
   - CCE-82159-5
   - NIST-800-53-CM-7(a)
@@ -5365,7 +5556,7 @@
   - restrict_strategy | bool
   - '"grub2-common" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - argcheck.rc == 0
+  - argcheck.rc == 0 and linecheck.rc == 0
   tags:
   - CCE-82159-5
   - NIST-800-53-CM-7(a)
@@ -5379,7 +5570,7 @@
 - name: Add vsyscall argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
     replace: \1 vsyscall=none"
   when:
   - grub2_vsyscall_argument | bool
@@ -5390,7 +5581,7 @@
   - restrict_strategy | bool
   - '"grub2-common" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - argcheck.rc != 0
+  - argcheck.rc != 0 and linecheck.rc == 0
   tags:
   - CCE-82159-5
   - NIST-800-53-CM-7(a)
@@ -10180,7 +10371,7 @@
   - restrict_strategy | bool
 
 - name: Check page_poison argument exists
-  command: grep 'GRUB_CMDLINE_LINUX.*page_poison=' /etc/default/grub
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*page_poison=' /etc/default/grub
   failed_when: false
   register: argcheck
   when:
@@ -10192,6 +10383,56 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82158-7
+  - NIST-800-53-CM-6(a)
+  - grub2_page_poison_argument
+  - low_disruption
+  - medium_complexity
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check page_poison argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_page_poison_argument | bool
+  - low_disruption | bool
+  - medium_complexity | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82158-7
+  - NIST-800-53-CM-6(a)
+  - grub2_page_poison_argument
+  - low_disruption
+  - medium_complexity
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add watch rule for  in /etc/audit/audit.rules
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="page_poison=1 "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_page_poison_argument | bool
+  - low_disruption | bool
+  - medium_complexity | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck.rc != 0 and linecheck.rc != 0
   tags:
   - CCE-82158-7
   - NIST-800-53-CM-6(a)
@@ -10216,7 +10457,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc == 0
+  - argcheck.rc == 0 and linecheck.rc == 0
   tags:
   - CCE-82158-7
   - NIST-800-53-CM-6(a)
@@ -10230,7 +10471,7 @@
 - name: Add page_poison argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
     replace: \1 page_poison=1"
   when:
   - grub2_page_poison_argument | bool
@@ -10241,7 +10482,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc != 0
+  - argcheck.rc != 0 and linecheck.rc == 0
   tags:
   - CCE-82158-7
   - NIST-800-53-CM-6(a)
@@ -10294,7 +10535,7 @@
   - restrict_strategy | bool
 
 - name: Check slub_debug argument exists
-  command: grep 'GRUB_CMDLINE_LINUX.*slub_debug=' /etc/default/grub
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*slub_debug=' /etc/default/grub
   failed_when: false
   register: argcheck
   when:
@@ -10306,6 +10547,56 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82157-9
+  - NIST-800-53-CM-6(a)
+  - grub2_slub_debug_argument
+  - low_disruption
+  - medium_complexity
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check slub_debug argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_slub_debug_argument | bool
+  - low_disruption | bool
+  - medium_complexity | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82157-9
+  - NIST-800-53-CM-6(a)
+  - grub2_slub_debug_argument
+  - low_disruption
+  - medium_complexity
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add watch rule for  in /etc/audit/audit.rules
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="slub_debug={{ var_slub_debug_options }} "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_slub_debug_argument | bool
+  - low_disruption | bool
+  - medium_complexity | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck.rc != 0 and linecheck.rc != 0
   tags:
   - CCE-82157-9
   - NIST-800-53-CM-6(a)
@@ -10330,7 +10621,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc == 0
+  - argcheck.rc == 0 and linecheck.rc == 0
   tags:
   - CCE-82157-9
   - NIST-800-53-CM-6(a)
@@ -10344,7 +10635,7 @@
 - name: Add slub_debug argument
   replace:
     path: /etc/default/grub
-    regexp: (GRUB_CMDLINE_LINUX=.*)"
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
     replace: \1 slub_debug={{ var_slub_debug_options }}"
   when:
   - grub2_slub_debug_argument | bool
@@ -10355,7 +10646,7 @@
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
-  - argcheck.rc != 0
+  - argcheck.rc != 0 and linecheck.rc == 0
   tags:
   - CCE-82157-9
   - NIST-800-53-CM-6(a)
@@ -10392,7 +10683,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUXTYPE=
       state: absent
     check_mode: true
@@ -10401,7 +10692,7 @@
   - name: Deduplicate values from /etc/selinux/config
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUXTYPE=
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10442,7 +10733,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUX=
       state: absent
     check_mode: true
@@ -10451,7 +10742,7 @@
   - name: Deduplicate values from /etc/selinux/config
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUX=
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10684,7 +10975,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveCountMax\s+
       state: absent
     check_mode: true
@@ -10693,7 +10984,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveCountMax\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10704,7 +10995,7 @@
       regexp: (?i)^\s*ClientAliveCountMax\s+
       line: ClientAliveCountMax 0
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040340 | bool
@@ -10739,7 +11030,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveInterval\s+
       state: absent
     check_mode: true
@@ -10748,7 +11039,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveInterval\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10759,7 +11050,7 @@
       regexp: (?i)^\s*ClientAliveInterval\s+
       line: ClientAliveInterval {{ sshd_idle_timeout_value }}
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040320 | bool
@@ -10797,7 +11088,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*HostbasedAuthentication\s+
       state: absent
     check_mode: true
@@ -10806,7 +11097,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*HostbasedAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10817,7 +11108,7 @@
       regexp: (?i)^\s*HostbasedAuthentication\s+
       line: HostbasedAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_010470 | bool
@@ -10851,7 +11142,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitEmptyPasswords\s+
       state: absent
     check_mode: true
@@ -10860,7 +11151,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitEmptyPasswords\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10871,7 +11162,7 @@
       regexp: (?i)^\s*PermitEmptyPasswords\s+
       line: PermitEmptyPasswords no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_010300 | bool
@@ -10906,7 +11197,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*GSSAPIAuthentication\s+
       state: absent
     check_mode: true
@@ -10915,7 +11206,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*GSSAPIAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10926,7 +11217,7 @@
       regexp: (?i)^\s*GSSAPIAuthentication\s+
       line: GSSAPIAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040430 | bool
@@ -10957,7 +11248,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*KerberosAuthentication\s+
       state: absent
     check_mode: true
@@ -10966,7 +11257,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*KerberosAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -10977,7 +11268,7 @@
       regexp: (?i)^\s*KerberosAuthentication\s+
       line: KerberosAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040440 | bool
@@ -11008,7 +11299,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*RhostsRSAAuthentication\s+
       state: absent
     check_mode: true
@@ -11017,7 +11308,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*RhostsRSAAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -11028,7 +11319,7 @@
       regexp: (?i)^\s*RhostsRSAAuthentication\s+
       line: RhostsRSAAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040330 | bool
@@ -11059,7 +11350,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitRootLogin\s+
       state: absent
     check_mode: true
@@ -11068,7 +11359,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitRootLogin\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -11079,7 +11370,7 @@
       regexp: (?i)^\s*PermitRootLogin\s+
       line: PermitRootLogin no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040370 | bool
@@ -11117,7 +11408,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*StrictModes\s+
       state: absent
     check_mode: true
@@ -11126,7 +11417,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*StrictModes\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -11137,7 +11428,7 @@
       regexp: (?i)^\s*StrictModes\s+
       line: StrictModes yes
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040450 | bool
@@ -11167,7 +11458,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*Banner\s+
       state: absent
     check_mode: true
@@ -11176,7 +11467,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*Banner\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -11187,7 +11478,7 @@
       regexp: (?i)^\s*Banner\s+
       line: Banner /etc/issue
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_07_040170 | bool
@@ -11221,7 +11512,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*Ciphers\s+
       state: absent
     check_mode: true
@@ -11230,7 +11521,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*Ciphers\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -11241,7 +11532,7 @@
       regexp: (?i)^\s*Ciphers\s+
       line: Ciphers {{ sshd_approved_ciphers }}
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - low_complexity | bool
@@ -11278,7 +11569,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*MACs\s+
       state: absent
     check_mode: true
@@ -11287,7 +11578,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*MACs\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -11298,7 +11589,7 @@
       regexp: (?i)^\s*MACs\s+
       line: MACs {{ sshd_approved_macs }}
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - low_complexity | bool
