@@ -809,6 +809,7 @@
   tags:
   - CCE-26957-1
   - CJIS-5.10.4.1
+  - DISA-STIG-RHEL-07-010019
   - NIST-800-171-3.4.8
   - NIST-800-53-CM-5(3)
   - NIST-800-53-CM-6(a)
@@ -823,6 +824,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_07_010019 | bool
   - ensure_redhat_gpgkey_installed | bool
   - high_severity | bool
   - medium_complexity | bool
@@ -838,6 +840,7 @@
   tags:
   - CCE-26957-1
   - CJIS-5.10.4.1
+  - DISA-STIG-RHEL-07-010019
   - NIST-800-171-3.4.8
   - NIST-800-53-CM-5(3)
   - NIST-800-53-CM-6(a)
@@ -852,6 +855,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_07_010019 | bool
   - ensure_redhat_gpgkey_installed | bool
   - high_severity | bool
   - medium_complexity | bool
@@ -867,6 +871,7 @@
   tags:
   - CCE-26957-1
   - CJIS-5.10.4.1
+  - DISA-STIG-RHEL-07-010019
   - NIST-800-171-3.4.8
   - NIST-800-53-CM-5(3)
   - NIST-800-53-CM-6(a)
@@ -881,6 +886,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_07_010019 | bool
   - ensure_redhat_gpgkey_installed | bool
   - high_severity | bool
   - medium_complexity | bool
@@ -894,6 +900,7 @@
   tags:
   - CCE-26957-1
   - CJIS-5.10.4.1
+  - DISA-STIG-RHEL-07-010019
   - NIST-800-171-3.4.8
   - NIST-800-53-CM-5(3)
   - NIST-800-53-CM-6(a)
@@ -908,6 +915,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_07_010019 | bool
   - ensure_redhat_gpgkey_installed | bool
   - high_severity | bool
   - medium_complexity | bool
@@ -920,6 +928,7 @@
     state: present
     key: /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
   when:
+  - DISA_STIG_RHEL_07_010019 | bool
   - ensure_redhat_gpgkey_installed | bool
   - high_severity | bool
   - medium_complexity | bool
@@ -933,6 +942,7 @@
   tags:
   - CCE-26957-1
   - CJIS-5.10.4.1
+  - DISA-STIG-RHEL-07-010019
   - NIST-800-171-3.4.8
   - NIST-800-53-CM-5(3)
   - NIST-800-53-CM-6(a)
@@ -4051,7 +4061,7 @@
   - service_debug-shell_disabled
 
 - name: Unit Socket Exists - debug-shell.socket
-  command: systemctl list-unit-files debug-shell.socket
+  command: systemctl -q list-unit-files debug-shell.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -4089,7 +4099,7 @@
   - no_reboot_needed | bool
   - service_debug_shell_disabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"debug-shell.socket" in socket_file_exists.stdout_lines[1]'
+  - socket_file_exists.stdout_lines is search("debug-shell.socket",multiline=True)
   tags:
   - CCE-80206-6
   - NIST-800-171-3.4.5
@@ -4138,6 +4148,7 @@
   - low_complexity | bool
   - low_disruption | bool
   - no_reboot_needed | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"systemd" in ansible_facts.packages'
   tags:
   - CCE-80449-2
@@ -4216,6 +4227,7 @@
   - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-27335-9
@@ -4242,6 +4254,7 @@
   - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-27335-9
@@ -4265,6 +4278,7 @@
   - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-27335-9
@@ -4288,6 +4302,7 @@
   - medium_severity | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - '"grub2-common" in ansible_facts.packages'
   tags:
   - CCE-27335-9
@@ -5407,6 +5422,34 @@
   - reboot_required
   - restrict_strategy
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80998-8
+  - DISA-STIG-RHEL-07-040520
+  - NIST-800-171-3.1.3
+  - NIST-800-171-3.4.7
+  - NIST-800-53-AC-4
+  - NIST-800-53-CA-3(5)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-CM-7(b)
+  - NIST-800-53-SC-7(21)
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_firewalld_enabled
+  when:
+  - DISA_STIG_RHEL_07_040520 | bool
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_firewalld_enabled | bool
+
 - name: Enable service firewalld
   block:
   - name: Gather the package facts
@@ -5429,6 +5472,7 @@
   - no_reboot_needed | bool
   - service_firewalld_enabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"firewalld" in ansible_facts.packages'
   tags:
   - CCE-80998-8
   - DISA-STIG-RHEL-07-040520
@@ -7908,7 +7952,7 @@
   - service_autofs_disabled
 
 - name: Unit Socket Exists - autofs.socket
-  command: systemctl list-unit-files autofs.socket
+  command: systemctl -q list-unit-files autofs.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -7952,7 +7996,7 @@
   - no_reboot_needed | bool
   - service_autofs_disabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"autofs.socket" in socket_file_exists.stdout_lines[1]'
+  - socket_file_exists.stdout_lines is search("autofs.socket",multiline=True)
   tags:
   - CCE-27498-5
   - DISA-STIG-RHEL-07-020110
@@ -8584,7 +8628,8 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   tags:
   - CCE-81047-3
   - configure_strategy
@@ -8607,7 +8652,8 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8638,7 +8684,8 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -8660,7 +8707,8 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - mount_info is defined and "nodev" not in mount_info.options
   tags:
   - CCE-81047-3
@@ -8685,7 +8733,8 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-81047-3
@@ -8709,7 +8758,8 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   tags:
   - CCE-81153-9
   - DISA-STIG-RHEL-07-021000
@@ -8740,7 +8790,8 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -8779,7 +8830,8 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - ("--fstab" | length == 0)
   - (device_name.stdout | length == 0)
   tags:
@@ -8809,7 +8861,8 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - mount_info is defined and "nosuid" not in mount_info.options
   tags:
   - CCE-81153-9
@@ -8842,7 +8895,8 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "/home" in ansible_mounts
+    | map(attribute="mount") | list )
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
   - CCE-81153-9
@@ -10489,7 +10543,7 @@
   - service_kdump_disabled
 
 - name: Unit Socket Exists - kdump.socket
-  command: systemctl list-unit-files kdump.socket
+  command: systemctl -q list-unit-files kdump.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -10531,7 +10585,7 @@
   - no_reboot_needed | bool
   - service_kdump_disabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"kdump.socket" in socket_file_exists.stdout_lines[1]'
+  - socket_file_exists.stdout_lines is search("kdump.socket",multiline=True)
   tags:
   - CCE-80258-7
   - DISA-STIG-RHEL-07-021300
@@ -10577,7 +10631,7 @@
   - service_rpcbind_disabled
 
 - name: Unit Socket Exists - rpcbind.socket
-  command: systemctl list-unit-files rpcbind.socket
+  command: systemctl -q list-unit-files rpcbind.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -10614,7 +10668,7 @@
   - no_reboot_needed | bool
   - service_rpcbind_disabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"rpcbind.socket" in socket_file_exists.stdout_lines[1]'
+  - socket_file_exists.stdout_lines is search("rpcbind.socket",multiline=True)
   tags:
   - CCE-80230-6
   - PCI-DSSv4-2.2.4
