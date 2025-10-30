@@ -772,7 +772,7 @@
     value: '1'
     no_extra_spaces: true
   loop: '{{ repo_grep_results.stdout |regex_findall( ''(.+\.repo):\[(.+)\]\n?'' ) if repo_grep_results is not skipped else
-    []}}'
+    [] }}'
   when:
   - enable_strategy | bool
   - ensure_gpgcheck_never_disabled | bool
@@ -4027,19 +4027,12 @@
   - no_reboot_needed
   - restrict_strategy
 
-- name: Block Disable service debug-shell
-  block:
-  - name: Disable service debug-shell
-    block:
-    - name: Disable service debug-shell
-      systemd:
-        name: debug-shell.service
-        enabled: 'no'
-        state: stopped
-        masked: 'yes'
-    rescue:
-    - name: Intentionally ignored previous 'Disable service debug-shell' failure, service was already disabled
-      meta: noop
+- name: Disable debug-shell SystemD Service - Collect systemd Services Present in the System
+  ansible.builtin.command: systemctl -q list-unit-files --type service
+  register: service_exists
+  changed_when: false
+  failed_when: service_exists.rc not in [0, 1]
+  check_mode: false
   when:
   - disable_strategy | bool
   - low_complexity | bool
@@ -4059,8 +4052,34 @@
   - no_reboot_needed
   - service_debug-shell_disabled
 
+- name: Disable debug-shell SystemD Service - Ensure "debug-shell.service" is Masked
+  ansible.builtin.systemd:
+    name: debug-shell.service
+    state: stopped
+    enabled: false
+    masked: true
+  when:
+  - disable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_debug_shell_disabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - service_exists.stdout_lines is search("debug-shell.service",multiline=True)
+  tags:
+  - CCE-80206-6
+  - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_debug-shell_disabled
+
 - name: Unit Socket Exists - debug-shell.socket
-  command: systemctl -q list-unit-files debug-shell.socket
+  ansible.builtin.command: systemctl -q list-unit-files debug-shell.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -4085,7 +4104,7 @@
   - service_debug-shell_disabled
 
 - name: Disable socket debug-shell
-  systemd:
+  ansible.builtin.systemd:
     name: debug-shell.socket
     enabled: 'no'
     state: stopped
@@ -4508,7 +4527,7 @@
 - name: Restrict Virtual Console Root Logins
   lineinfile:
     dest: /etc/securetty
-    regexp: ^vc
+    regexp: ^vc/[0-9]
     state: absent
   tags:
   - CCE-27318-5
@@ -4667,7 +4686,7 @@
 - name: Check if umask in /etc/bashrc is already set
   ansible.builtin.lineinfile:
     path: /etc/bashrc
-    regexp: ^(\s*)umask\s+.*
+    regexp: ^[^#]*\bumask\s+\d+$
     state: absent
   check_mode: true
   changed_when: false
@@ -4694,8 +4713,8 @@
 - name: Replace user umask in /etc/bashrc
   ansible.builtin.replace:
     path: /etc/bashrc
-    regexp: ^(\s*)umask(\s+).*
-    replace: \g<1>umask\g<2>{{ var_accounts_user_umask }}
+    regexp: ^([^#]*\b)umask\s+\d+$
+    replace: \g<1>umask {{ var_accounts_user_umask }}
   when:
   - accounts_umask_etc_bashrc | bool
   - low_complexity | bool
@@ -4918,531 +4937,6 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-27407-6
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-07-030000
-  - NIST-800-171-3.3.1
-  - NIST-800-171-3.3.2
-  - NIST-800-171-3.3.6
-  - NIST-800-53-AC-2(g)
-  - NIST-800-53-AC-6(9)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-12(c)
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-AU-2(d)
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-SI-4(23)
-  - PCI-DSS-Req-10.1
-  - PCI-DSSv4-10.2.1
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - service_auditd_enabled
-  when:
-  - DISA_STIG_RHEL_07_030000 | bool
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - service_auditd_enabled | bool
-
-- name: Enable service auditd
-  block:
-  - name: Gather the package facts
-    package_facts:
-      manager: auto
-  - name: Enable service auditd
-    systemd:
-      name: auditd
-      enabled: 'yes'
-      state: started
-      masked: 'no'
-    when:
-    - '"audit" in ansible_facts.packages'
-  when:
-  - DISA_STIG_RHEL_07_030000 | bool
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - service_auditd_enabled | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"audit" in ansible_facts.packages'
-  tags:
-  - CCE-27407-6
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-07-030000
-  - NIST-800-171-3.3.1
-  - NIST-800-171-3.3.2
-  - NIST-800-171-3.3.6
-  - NIST-800-53-AC-2(g)
-  - NIST-800-53-AC-6(9)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-12(c)
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-AU-2(d)
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-SI-4(23)
-  - PCI-DSS-Req-10.1
-  - PCI-DSSv4-10.2.1
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - service_auditd_enabled
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-
-- name: Check audit argument exists
-  command: grep '^\s*GRUB_CMDLINE_LINUX=.*audit=' /etc/default/grub
-  failed_when: false
-  register: argcheck
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Check audit argument exists
-  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
-  failed_when: false
-  register: linecheck
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Add audit argument
-  ansible.builtin.lineinfile:
-    line: GRUB_CMDLINE_LINUX="audit=1 "
-    state: present
-    dest: /etc/default/grub
-    create: true
-    mode: '0644'
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc != 0
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Replace existing audit argument
-  replace:
-    path: /etc/default/grub
-    regexp: audit=[a-zA-Z0-9,]+
-    replace: audit=1
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  - argcheck is not skipped and linecheck is not skipped and argcheck.rc == 0 and linecheck.rc == 0
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Add audit argument
-  replace:
-    path: /etc/default/grub
-    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 audit=1"
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc == 0
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Update grub defaults and the bootloader menu
-  command: /sbin/grubby --update-kernel=ALL --args="audit=1"
-  when:
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-27212-0
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-
-- name: Check audit_backlog_limit argument exists
-  command: grep '^\s*GRUB_CMDLINE_LINUX=.*audit_backlog_limit=' /etc/default/grub
-  failed_when: false
-  register: argcheck
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Check audit_backlog_limit argument exists
-  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
-  failed_when: false
-  register: linecheck
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Add audit_backlog_limit argument
-  ansible.builtin.lineinfile:
-    line: GRUB_CMDLINE_LINUX="audit_backlog_limit=8192 "
-    state: present
-    dest: /etc/default/grub
-    create: true
-    mode: '0644'
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc != 0
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Replace existing audit_backlog_limit argument
-  replace:
-    path: /etc/default/grub
-    regexp: audit_backlog_limit=[a-zA-Z0-9,]+
-    replace: audit_backlog_limit=8192
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  - argcheck is not skipped and linecheck is not skipped and argcheck.rc == 0 and linecheck.rc == 0
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Add audit_backlog_limit argument
-  replace:
-    path: /etc/default/grub
-    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
-    replace: \1 audit_backlog_limit=8192"
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc == 0
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Update grub defaults and the bootloader menu
-  command: /sbin/grubby --update-kernel=ALL --args="audit_backlog_limit=8192"
-  when:
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-82156-1
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-27331-8
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AU-11
-  - NIST-800-53-CM-6(a)
-  - auditd_data_retention_flush
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - auditd_data_retention_flush | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Configure auditd Flush Priority
-  lineinfile:
-    dest: /etc/audit/auditd.conf
-    regexp: ^\s*flush\s*=\s*.*$
-    line: flush = {{ var_auditd_flush }}
-    state: present
-    create: true
-  when:
-  - auditd_data_retention_flush | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-27331-8
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AU-11
-  - NIST-800-53-CM-6(a)
-  - auditd_data_retention_flush
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
 
 - name: Gather the package facts
   package_facts:
@@ -8152,19 +7646,12 @@
   - no_reboot_needed | bool
   - service_autofs_disabled | bool
 
-- name: Block Disable service autofs
-  block:
-  - name: Disable service autofs
-    block:
-    - name: Disable service autofs
-      systemd:
-        name: autofs.service
-        enabled: 'no'
-        state: stopped
-        masked: 'yes'
-    rescue:
-    - name: Intentionally ignored previous 'Disable service autofs' failure, service was already disabled
-      meta: noop
+- name: Disable the Automounter - Collect systemd Services Present in the System
+  ansible.builtin.command: systemctl -q list-unit-files --type service
+  register: service_exists
+  changed_when: false
+  failed_when: service_exists.rc not in [0, 1]
+  check_mode: false
   when:
   - DISA_STIG_RHEL_07_020110 | bool
   - disable_strategy | bool
@@ -8190,8 +7677,40 @@
   - no_reboot_needed
   - service_autofs_disabled
 
+- name: Disable the Automounter - Ensure "autofs.service" is Masked
+  ansible.builtin.systemd:
+    name: autofs.service
+    state: stopped
+    enabled: false
+    masked: true
+  when:
+  - DISA_STIG_RHEL_07_020110 | bool
+  - disable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_autofs_disabled | bool
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and "autofs" in ansible_facts.packages
+    )
+  - service_exists.stdout_lines is search("autofs.service",multiline=True)
+  tags:
+  - CCE-27498-5
+  - DISA-STIG-RHEL-07-020110
+  - NIST-800-171-3.4.6
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-CM-7(a)
+  - NIST-800-53-CM-7(b)
+  - NIST-800-53-MP-7
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_autofs_disabled
+
 - name: Unit Socket Exists - autofs.socket
-  command: systemctl -q list-unit-files autofs.socket
+  ansible.builtin.command: systemctl -q list-unit-files autofs.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -8222,7 +7741,7 @@
   - service_autofs_disabled
 
 - name: Disable socket autofs
-  systemd:
+  ansible.builtin.systemd:
     name: autofs.socket
     enabled: 'no'
     state: stopped
@@ -10293,7 +9812,7 @@
   - CCE-80169-6
   - NIST-800-53-CM-6
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_users_coredumps
   - low_complexity
   - low_disruption
@@ -10326,7 +9845,7 @@
   - CCE-80169-6
   - NIST-800-53-CM-6
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_users_coredumps
   - low_complexity
   - low_disruption
@@ -10842,6 +10361,7 @@
   - NIST-800-53-AC-3(3)(a)
   - NIST-800-53-AU-9
   - NIST-800-53-SC-7(21)
+  - PCI-DSSv4-1.2.6
   - high_severity
   - low_complexity
   - low_disruption
@@ -10869,19 +10389,12 @@
   - no_reboot_needed | bool
   - package_abrt_removed | bool
 
-- name: Block Disable service kdump
-  block:
-  - name: Disable service kdump
-    block:
-    - name: Disable service kdump
-      systemd:
-        name: kdump.service
-        enabled: 'no'
-        state: stopped
-        masked: 'yes'
-    rescue:
-    - name: Intentionally ignored previous 'Disable service kdump' failure, service was already disabled
-      meta: noop
+- name: Disable KDump Kernel Crash Analyzer (kdump) - Collect systemd Services Present in the System
+  ansible.builtin.command: systemctl -q list-unit-files --type service
+  register: service_exists
+  changed_when: false
+  failed_when: service_exists.rc not in [0, 1]
+  check_mode: false
   when:
   - DISA_STIG_RHEL_07_021300 | bool
   - disable_strategy | bool
@@ -10904,8 +10417,37 @@
   - no_reboot_needed
   - service_kdump_disabled
 
+- name: Disable KDump Kernel Crash Analyzer (kdump) - Ensure "kdump.service" is Masked
+  ansible.builtin.systemd:
+    name: kdump.service
+    state: stopped
+    enabled: false
+    masked: true
+  when:
+  - DISA_STIG_RHEL_07_021300 | bool
+  - disable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - service_exists.stdout_lines is search("kdump.service",multiline=True)
+  tags:
+  - CCE-80258-7
+  - DISA-STIG-RHEL-07-021300
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-CM-7(a)
+  - NIST-800-53-CM-7(b)
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_kdump_disabled
+
 - name: Unit Socket Exists - kdump.socket
-  command: systemctl -q list-unit-files kdump.socket
+  ansible.builtin.command: systemctl -q list-unit-files kdump.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -10933,7 +10475,7 @@
   - service_kdump_disabled
 
 - name: Disable socket kdump
-  systemd:
+  ansible.builtin.systemd:
     name: kdump.socket
     enabled: 'no'
     state: stopped
@@ -10961,19 +10503,12 @@
   - no_reboot_needed
   - service_kdump_disabled
 
-- name: Block Disable service rpcbind
-  block:
-  - name: Disable service rpcbind
-    block:
-    - name: Disable service rpcbind
-      systemd:
-        name: rpcbind.service
-        enabled: 'no'
-        state: stopped
-        masked: 'yes'
-    rescue:
-    - name: Intentionally ignored previous 'Disable service rpcbind' failure, service was already disabled
-      meta: noop
+- name: Disable rpcbind Service - Collect systemd Services Present in the System
+  ansible.builtin.command: systemctl -q list-unit-files --type service
+  register: service_exists
+  changed_when: false
+  failed_when: service_exists.rc not in [0, 1]
+  check_mode: false
   when:
   - disable_strategy | bool
   - low_complexity | bool
@@ -10992,8 +10527,33 @@
   - no_reboot_needed
   - service_rpcbind_disabled
 
+- name: Disable rpcbind Service - Ensure "rpcbind.service" is Masked
+  ansible.builtin.systemd:
+    name: rpcbind.service
+    state: stopped
+    enabled: false
+    masked: true
+  when:
+  - disable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - no_reboot_needed | bool
+  - service_rpcbind_disabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - service_exists.stdout_lines is search("rpcbind.service",multiline=True)
+  tags:
+  - CCE-80230-6
+  - PCI-DSSv4-2.2.4
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - low_severity
+  - no_reboot_needed
+  - service_rpcbind_disabled
+
 - name: Unit Socket Exists - rpcbind.socket
-  command: systemctl -q list-unit-files rpcbind.socket
+  ansible.builtin.command: systemctl -q list-unit-files rpcbind.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -11017,7 +10577,7 @@
   - service_rpcbind_disabled
 
 - name: Disable socket rpcbind
-  systemd:
+  ansible.builtin.systemd:
     name: rpcbind.socket
     enabled: 'no'
     state: stopped
@@ -11131,7 +10691,6 @@
   - restrict_strategy | bool
   - sshd_set_idle_timeout | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - ansible_distribution == 'RedHat' and ansible_distribution_version is version('8.5', '<=')
   tags:
   - CCE-27433-2
   - CJIS-5.5.6
@@ -11687,3 +11246,528 @@
   - no_reboot_needed
   - restrict_strategy
   - sshd_use_approved_macs
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-27407-6
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-07-030000
+  - NIST-800-171-3.3.1
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AC-6(9)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-AU-2(d)
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
+  - PCI-DSS-Req-10.1
+  - PCI-DSSv4-10.2.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_auditd_enabled
+  when:
+  - DISA_STIG_RHEL_07_030000 | bool
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_auditd_enabled | bool
+
+- name: Enable service auditd
+  block:
+  - name: Gather the package facts
+    package_facts:
+      manager: auto
+  - name: Enable service auditd
+    systemd:
+      name: auditd
+      enabled: 'yes'
+      state: started
+      masked: 'no'
+    when:
+    - '"audit" in ansible_facts.packages'
+  when:
+  - DISA_STIG_RHEL_07_030000 | bool
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_auditd_enabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
+  tags:
+  - CCE-27407-6
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-07-030000
+  - NIST-800-171-3.3.1
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AC-6(9)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-AU-2(d)
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
+  - PCI-DSS-Req-10.1
+  - PCI-DSSv4-10.2.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_auditd_enabled
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+
+- name: Check audit argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*audit=' /etc/default/grub
+  failed_when: false
+  register: argcheck
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check audit argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add audit argument
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="audit=1 "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc != 0
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Replace existing audit argument
+  replace:
+    path: /etc/default/grub
+    regexp: audit=[a-zA-Z0-9,]+
+    replace: audit=1
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck is not skipped and linecheck is not skipped and argcheck.rc == 0 and linecheck.rc == 0
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add audit argument
+  replace:
+    path: /etc/default/grub
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
+    replace: \1 audit=1"
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc == 0
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Update grub defaults and the bootloader menu
+  command: /sbin/grubby --update-kernel=ALL --args="audit=1"
+  when:
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-27212-0
+  - CJIS-5.4.1.1
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+
+- name: Check audit_backlog_limit argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=.*audit_backlog_limit=' /etc/default/grub
+  failed_when: false
+  register: argcheck
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Check audit_backlog_limit argument exists
+  command: grep '^\s*GRUB_CMDLINE_LINUX=' /etc/default/grub
+  failed_when: false
+  register: linecheck
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add audit_backlog_limit argument
+  ansible.builtin.lineinfile:
+    line: GRUB_CMDLINE_LINUX="audit_backlog_limit=8192 "
+    state: present
+    dest: /etc/default/grub
+    create: true
+    mode: '0644'
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc != 0
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Replace existing audit_backlog_limit argument
+  replace:
+    path: /etc/default/grub
+    regexp: audit_backlog_limit=[a-zA-Z0-9,]+
+    replace: audit_backlog_limit=8192
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck is not skipped and linecheck is not skipped and argcheck.rc == 0 and linecheck.rc == 0
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Add audit_backlog_limit argument
+  replace:
+    path: /etc/default/grub
+    regexp: (^\s*GRUB_CMDLINE_LINUX=.*)"
+    replace: \1 audit_backlog_limit=8192"
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  - argcheck is not skipped and linecheck is not skipped and argcheck.rc != 0 and linecheck.rc == 0
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Update grub defaults and the bootloader menu
+  command: /sbin/grubby --update-kernel=ALL --args="audit_backlog_limit=8192"
+  when:
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-82156-1
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-27331-8
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AU-11
+  - NIST-800-53-CM-6(a)
+  - auditd_data_retention_flush
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_data_retention_flush | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Configure auditd Flush Priority
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    regexp: ^\s*flush\s*=\s*.*$
+    line: flush = {{ var_auditd_flush }}
+    state: present
+    create: true
+  when:
+  - auditd_data_retention_flush | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-27331-8
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AU-11
+  - NIST-800-53-CM-6(a)
+  - auditd_data_retention_flush
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
